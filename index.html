@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover lets the map run under the iPhone notch / home bar;
+         CSS safe-area insets keep buttons clear of them. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="description" content="Free, beginner-friendly hiking maps that work with no signal." />
+    <meta name="theme-color" content="#2f6b3a" />
+
+    <!-- iOS: run full screen when launched from the home screen. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Hike" />
+
+    <link rel="icon" href="/hikingapp/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/hikingapp/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/hikingapp/apple-touch-icon-180x180.png" />
+    <title>Hiking App</title>
+  </head>
+  <body>
+    <main id="map" aria-label="Map"></main>
+
+    <div class="top-overlay">
+      <div class="chips">
+        <span id="gps-chip" class="chip" role="status" aria-live="polite"></span>
+        <span id="offline-chip" class="chip" data-tone="off" hidden>Offline · GPS still works</span>
+      </div>
+      <p id="gps-banner" class="banner" role="alert" hidden></p>
+    </div>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <noscript>This app needs JavaScript turned on.</noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

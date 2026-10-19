@@ -1,0 +1,28 @@
+{
+  "name": "hikingapp",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "icons": "pwa-assets-generator"
+  },
+  "dependencies": {
+    "maplibre-gl": "^6.15.0"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@vite-pwa/assets-generator": "^2.0.0",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^4.1.12",
+    "workbox-window": "^7.4.1"
+  }
+}
