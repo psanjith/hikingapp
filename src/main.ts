@@ -51,6 +51,7 @@ import { MapsPanel } from './ui/mapsPanel';
 import { ReadyPanel } from './ui/readyPanel';
 import { RouteAlert } from './ui/routeAlert';
 import { RoutesPanel } from './ui/routesPanel';
+import { SharePanel } from './ui/sharePanel';
 import { registerServiceWorker } from './ui/serviceWorker';
 import { showToast } from './ui/toast';
 
@@ -312,9 +313,9 @@ async function finishHike(): Promise<void> {
   }
   await history.refresh();
   showToast(`Hike saved · ${summary}`, {
-    actionLabel: 'My hikes',
-    onAction: () => historyPanel.open(),
-    durationMs: 8_000,
+    actionLabel: 'Share',
+    onAction: () => void sharePanel.open(saved),
+    durationMs: 10_000,
   });
 }
 
@@ -330,7 +331,9 @@ const hikeViewer = new HikeViewer(
     follow.stop();
     fitMapTo(map, bounds);
   },
+  (hike) => void sharePanel.open(hike),
 );
+const sharePanel = new SharePanel(requireElement<HTMLDialogElement>('share-panel'), history);
 const historyPanel = new HistoryPanel(requireElement<HTMLDialogElement>('history-panel'), history, (hike) => {
   void hikeViewer.show(hike);
 });

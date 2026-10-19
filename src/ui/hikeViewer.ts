@@ -9,7 +9,7 @@ import { showToast } from './toast';
 
 /**
  * Shows one past hike: its track on the map, and a card at the bottom with
- * its stats and Export GPX / Rename / Delete. The map stays fully usable.
+ * its stats and Share image / Export GPX / Rename / Delete. The map stays usable.
  */
 export class HikeViewer {
   private hike: Hike | null = null;
@@ -22,10 +22,14 @@ export class HikeViewer {
     private readonly layer: TrackLayer,
     /** Move the map so the hike fills the screen. */
     private readonly focus: (bounds: [number, number, number, number]) => void,
+    private readonly share: (hike: Hike) => void,
   ) {
     this.title = card.querySelector('.view-name')!;
     this.meta = card.querySelector('.view-meta')!;
     card.querySelector('.view-close')!.addEventListener('click', () => this.close());
+    card.querySelector('.view-share')!.addEventListener('click', () => {
+      if (this.hike) this.share(this.hike);
+    });
     card.querySelector('.view-export')!.addEventListener('click', () => void this.export());
     card.querySelector('.view-rename')!.addEventListener('click', () => void this.rename());
     card.querySelector('.view-delete')!.addEventListener('click', () => void this.delete());

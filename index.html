@@ -51,8 +51,9 @@
           </div>
           <button class="panel-close view-close" type="button" aria-label="Close">×</button>
         </header>
+        <button class="btn btn-primary btn-wide view-share" type="button">Share image</button>
         <div class="card-actions">
-          <button class="btn btn-primary view-export" type="button" aria-label="Export as a GPX file">Export</button>
+          <button class="btn btn-secondary view-export" type="button" aria-label="Export as a GPX file">Export</button>
           <button class="btn btn-secondary view-rename" type="button">Rename</button>
           <button class="btn btn-secondary view-delete" type="button">Delete</button>
         </div>
@@ -158,6 +159,32 @@
           weather, the trail or the daylight isn't on your side. In an emergency, call 911.
         </div>
         <button class="btn btn-primary btn-wide ready-done" type="button">Got it</button>
+      </div>
+    </dialog>
+
+    <dialog id="share-panel" class="sheet" aria-labelledby="share-panel-title">
+      <div class="sheet-body">
+        <header class="sheet-header">
+          <h2 id="share-panel-title">Share your hike</h2>
+          <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <p class="sheet-intro">
+          A see-through image of your route to put on your photos, like an Instagram story.
+        </p>
+        <div class="share-preview"><img alt="Preview of your hike image" /></div>
+        <div class="share-options">
+          <div class="segmented" role="radiogroup" aria-label="Colour">
+            <label><input type="radio" name="share-color" value="white" checked /> White</label>
+            <label><input type="radio" name="share-color" value="black" /> Black</label>
+          </div>
+          <label class="share-toggle"><input class="share-stats" type="checkbox" checked /> Distance and time</label>
+        </div>
+        <button class="btn btn-primary btn-wide share-copy" type="button">Copy for Instagram story</button>
+        <button class="btn btn-secondary btn-wide share-save" type="button">Save image</button>
+        <p class="sheet-tip">
+          Copy, then open a story in Instagram and paste it in as a sticker. Or save it to your photos
+          and add it from there.
+        </p>
       </div>
     </dialog>
 
