@@ -46,40 +46,17 @@ export default defineConfig({
       },
       workbox: {
         // Precache the whole app shell so it opens with zero connectivity.
-        // (.mjs covers MapLibre's background worker script.)
-        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,webmanifest}'],
+        // .mjs: MapLibre's worker. .pbf/.json: map fonts and icon sprites.
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,webmanifest,pbf,json}'],
         // MapLibre makes our main JS bundle large. Raise Workbox's 2 MB
         // per-file cap so the map library is never silently left uncached.
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        // Take control of the page on first install, so the map tiles viewed
-        // during the very first visit are already cached for offline use.
+        // Take control of the page on first install, so everything needed
+        // offline is cached from the very first visit.
         clientsClaim: true,
-        // Temporary (Stage 1): cache online map data from OpenFreeMap as it's
-        // viewed. Stage 2 replaces this with a region file stored on-device.
-        runtimeCaching: [
-          {
-            // The style file points at the current weekly tile build, so
-            // refresh it in the background rather than pinning an old one.
-            urlPattern: ({ url }) =>
-              url.origin === 'https://tiles.openfreemap.org' && url.pathname.startsWith('/styles/'),
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'openfreemap-styles',
-              cacheableResponse: { statuses: [200] },
-            },
-          },
-          {
-            // Tiles, fonts and icons have versioned URLs, so a cached copy is
-            // always correct: serve from cache first, network only if missing.
-            urlPattern: ({ url }) => url.origin === 'https://tiles.openfreemap.org',
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'openfreemap',
-              expiration: { maxEntries: 5000, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [200] },
-            },
-          },
-        ],
+        // Map regions live in OPFS, not the service worker cache; their
+        // byte-range requests go straight to the network or the device.
+        globIgnores: ['dev-maps/**'],
       },
     }),
   ],

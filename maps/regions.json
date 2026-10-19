@@ -1,0 +1,24 @@
+{
+  "maxzoom": 14,
+  "onlineRegionId": "british-columbia",
+  "regions": [
+    {
+      "id": "lower-mainland",
+      "name": "Lower Mainland & Sea-to-Sky",
+      "description": "Vancouver, North Shore, Fraser Valley, Squamish and Whistler.",
+      "bbox": [-123.55, 48.95, -121.3, 50.45]
+    },
+    {
+      "id": "vancouver-island",
+      "name": "Vancouver Island",
+      "description": "Victoria, Nanaimo, Tofino, Strathcona and the Gulf Islands.",
+      "bbox": [-128.6, 48.2, -123.2, 51.0]
+    },
+    {
+      "id": "british-columbia",
+      "name": "All of British Columbia",
+      "description": "The whole province. Large download, so use Wi-Fi.",
+      "regionFile": "british-columbia.geojson"
+    }
+  ]
+}

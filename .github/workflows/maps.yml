@@ -1,0 +1,76 @@
+name: Build offline maps
+
+# Trails change, so regions are rebuilt from fresh OpenStreetMap data monthly.
+on:
+  schedule:
+    - cron: '0 10 2 * *' # 10:00 UTC on the 2nd of every month
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Region ids to rebuild, comma separated (blank = all)'
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: maps
+  cancel-in-progress: false
+
+env:
+  PMTILES_VERSION: 1.31.2
+  BUCKET: hikingapp-maps
+  AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: auto
+  AWS_ENDPOINT_URL: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+  # R2 doesn't support every checksum newer AWS CLIs send by default.
+  AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+  AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Install pmtiles CLI
+        run: |
+          curl -sSfL "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz" | tar xz pmtiles
+          ./pmtiles version
+
+      - name: Fetch currently published catalog
+        run: aws s3 cp "s3://$BUCKET/catalog.json" published-catalog.json || echo '{}' > published-catalog.json
+
+      - name: Extract regions
+        env:
+          ONLY: ${{ inputs.only }}
+        run: node scripts/build-maps.mjs --out dist-maps --pmtiles ./pmtiles --merge published-catalog.json ${ONLY:+--only "$ONLY"}
+
+      - name: Upload region files
+        # File names contain the build date and never change, so they can be
+        # cached forever by browsers and Cloudflare's CDN.
+        run: |
+          aws s3 cp dist-maps/regions "s3://$BUCKET/regions" --recursive \
+            --content-type application/octet-stream \
+            --cache-control "public, max-age=31536000, immutable"
+
+      - name: Publish catalog
+        # Uploaded last, so it never lists a file that isn't there yet.
+        run: |
+          aws s3 cp dist-maps/catalog.json "s3://$BUCKET/catalog.json" \
+            --content-type application/json \
+            --cache-control "public, max-age=300"
+
+      - name: Remove old map versions
+        # Keep the two newest files per region: someone may be partway through
+        # downloading last month's version when the new one is published.
+        run: |
+          for id in $(jq -r '.regions[].id' maps/regions.json); do
+            aws s3 ls "s3://$BUCKET/regions/$id/" | awk '{print $4}' | sort -r | tail -n +3 |
+              while read -r file; do aws s3 rm "s3://$BUCKET/regions/$id/$file"; done
+          done

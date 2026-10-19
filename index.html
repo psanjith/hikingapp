@@ -33,6 +33,22 @@
       <p id="gps-banner" class="banner" role="alert" hidden></p>
     </div>
 
+    <dialog id="maps-panel" class="sheet" aria-labelledby="maps-panel-title">
+      <div class="sheet-body">
+        <header class="sheet-header">
+          <h2 id="maps-panel-title">Offline maps</h2>
+          <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <p class="sheet-intro">
+          Download the area you're hiking <strong>before you leave home</strong>, ideally on Wi-Fi.
+          Downloaded maps work with no signal, and your location works without internet.
+        </p>
+        <p class="panel-notice" hidden></p>
+        <ul class="region-list"></ul>
+        <p class="storage-summary"></p>
+      </div>
+    </dialog>
+
     <div id="toasts" class="toasts" aria-live="polite"></div>
 
     <noscript>This app needs JavaScript turned on.</noscript>

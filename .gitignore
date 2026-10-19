@@ -5,3 +5,8 @@ dev-dist/
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+
+# Locally built map regions for development (real ones live on Cloudflare R2)
+public/dev-maps/
+dist-maps/
+.env.local

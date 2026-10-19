@@ -73,7 +73,9 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - **Protomaps / PMTiles** for single-file regional map downloads.
 - **Hosting map files: Cloudflare R2** (free egress, 10 GB free storage; requires a card on file). Chosen over GitHub Pages because Pages has a 1 GB site cap and a 100 GB/month soft bandwidth cap, which a club-sized user base could exceed. A custom domain on R2 is recommended for production (the `r2.dev` URL is rate-limited). Maps should be regenerated periodically (e.g. monthly) since trails change.
 - Keep regions small and selectable (e.g. BC, or even Lower Mainland).
-- Stage 1 temporarily uses OpenFreeMap online vector tiles until R2 + PMTiles land in Stage 2.
+- **How it's built (Stage 2):** regions are defined in `maps/regions.json` and cut from the daily Protomaps planet build with `pmtiles extract` at max zoom 14 (`scripts/build-maps.mjs`). Measured sizes (Oct 2026): Lower Mainland & Sea-to-Sky 59 MB, Vancouver Island 102 MB, all of BC 951 MB. The `maps.yml` workflow rebuilds monthly and uploads to R2 as `regions/<id>/<YYYYMMDD>.pmtiles` (immutable) plus `catalog.json` (uploaded last, 5-min cache). Keeps the two newest versions per region.
+- **In the app:** downloads run in a Web Worker writing to OPFS with sync access handles, resumable via HTTP Range. IndexedDB records only fully-verified downloads. A custom MapLibre protocol (`hike://`, `TileRouter`) serves tiles from downloaded regions first, then streams the all-BC file from R2 when online. Style = Protomaps "light" + custom bold trail layers; fonts/sprites are bundled in `public/basemap` and precached.
+- Local dev: `node scripts/build-maps.mjs --out public/dev-maps --only lower-mainland` and `VITE_MAPS_BASE_URL=/hikingapp/dev-maps/` in `.env.local`.
 
 **Recording & distance:**
 - Save a GPS point every few seconds (lat, lon, time, accuracy).

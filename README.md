@@ -15,7 +15,7 @@ Apps with offline maps and GPX import are either paid or confusing. This one is 
 | Stage | Feature | Status |
 | --- | --- | --- |
 | 1 | App shell, map, live location, opens offline | ✅ |
-| 2 | Downloadable offline map regions | ⏳ |
+| 2 | Downloadable offline map regions | ✅ |
 | 3 | GPX import | ⏳ |
 | 4 | Hike recording (pause/resume, distance, crash-safe autosave) | ⏳ |
 | 5 | Hike history and GPX export | ⏳ |
@@ -24,7 +24,7 @@ Apps with offline maps and GPX import are either paid or confusing. This one is 
 
 ## Tech
 
-TypeScript · Vite · MapLibre GL JS · OpenStreetMap data · Workbox service worker (PWA) · Vitest · GitHub Pages
+TypeScript · Vite · MapLibre GL JS · OpenStreetMap data via Protomaps (PMTiles) · OPFS + IndexedDB · Workbox service worker (PWA) · Vitest · GitHub Pages + Actions · Cloudflare R2
 
 ## Running locally
 

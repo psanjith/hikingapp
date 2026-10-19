@@ -1,37 +1,86 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './styles.css';
 
+import type { VectorTileSource } from 'maplibre-gl';
 import { DEFAULT_VIEW, STALE_FIX_MS } from './config';
 import { createBrowserLocationSource } from './location/browserLocationSource';
 import type { LocationFix } from './location/types';
 import { createMap } from './map/createMap';
 import { FollowUser } from './map/followUser';
 import { UserLocationLayer } from './map/userLocationLayer';
+import { createOpfsMapFileStore } from './maps/mapFileStore';
+import { OfflineMaps } from './maps/offlineMaps';
+import { tileUrl } from './maps/style';
+import { TileRouter } from './maps/tileRouter';
 import { loadLastView, saveLastPosition } from './storage/lastPosition';
 import { watchConnectivity } from './ui/connectivity';
 import { GpsStatus } from './ui/gpsStatus';
-import { RecenterControl } from './ui/recenterControl';
+import { MapsPanel } from './ui/mapsPanel';
+import { LOCATE_ICON, MAPS_ICON, MapButtonControl } from './ui/mapButtonControl';
 import { registerServiceWorker } from './ui/serviceWorker';
 import { showToast } from './ui/toast';
 
-function requireElement(id: string): HTMLElement {
+function requireElement<T extends HTMLElement = HTMLElement>(id: string): T {
   const element = document.getElementById(id);
   if (!element) throw new Error(`Missing #${id} in index.html`);
-  return element;
+  return element as T;
 }
 
+// --- Map + offline regions -----------------------------------------------------
+
+const tileRouter = new TileRouter();
 const map = createMap(requireElement('map'), loadLastView() ?? DEFAULT_VIEW);
+
+// MapLibre caches tiles it has already drawn, including empty ones from areas
+// with no map yet. Changing the tile URL's version makes it ask again, e.g.
+// right after a region finishes downloading or the internet comes back.
+let tileVersion = 0;
+function refreshTiles(): void {
+  map.getSource<VectorTileSource>('protomaps')?.setTiles([tileUrl(++tileVersion)]);
+}
+
+const offlineMaps = new OfflineMaps(createOpfsMapFileStore(), tileRouter, refreshTiles);
+const mapsPanel = new MapsPanel(requireElement<HTMLDialogElement>('maps-panel'), offlineMaps);
+window.addEventListener('online', refreshTiles);
+
+void offlineMaps.init().then(() => {
+  refreshTiles();
+  if (!offlineMaps.hasDownloadedRegions) {
+    showToast('No offline map yet. Download one before your hike, in case you lose signal.', {
+      actionLabel: 'Maps',
+      onAction: () => mapsPanel.open(),
+      durationMs: 15_000,
+    });
+  }
+});
+
+// --- Live location -----------------------------------------------------------
+
 const location = createBrowserLocationSource();
 const userLocation = new UserLocationLayer(map);
 const follow = new FollowUser(map);
 const gpsStatus = new GpsStatus(requireElement('gps-chip'), requireElement('gps-banner'));
 
-const recenter = new RecenterControl(() => follow.recenter(location.lastFix));
+// Bottom-right buttons. MapLibre stacks bottom controls upwards, so the one
+// added last sits on top: locate (most used) at the bottom, Maps above it.
+const recenter = new MapButtonControl({
+  label: 'Centre map on my location',
+  icon: LOCATE_ICON,
+  className: 'locate-btn',
+  onClick: () => follow.recenter(location.lastFix),
+});
 map.addControl(recenter, 'bottom-right');
+map.addControl(
+  new MapButtonControl({
+    label: 'Offline maps',
+    icon: MAPS_ICON,
+    caption: 'Maps',
+    onClick: () => mapsPanel.open(),
+  }),
+  'bottom-right',
+);
 recenter.setActive(follow.isFollowing);
 follow.onChange((following) => recenter.setActive(following));
-
-// --- Live location -----------------------------------------------------------
 
 let lastFixReceivedAt = 0;
 let isStale = false;
@@ -67,17 +116,6 @@ setInterval(() => {
 document.addEventListener('visibilitychange', () => {
   const fix = location.lastFix;
   if (document.visibilityState === 'hidden' && fix) saveLastPosition(fix.lon, fix.lat);
-});
-
-// --- Map loading problems ------------------------------------------------------
-
-let warnedMapOffline = false;
-map.on('error', () => {
-  if (warnedMapOffline || navigator.onLine) return;
-  warnedMapOffline = true;
-  showToast("Some map areas aren't saved yet. Your location still works without internet.", {
-    durationMs: 8000,
-  });
 });
 
 // --- App shell -------------------------------------------------------------------
