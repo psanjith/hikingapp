@@ -7,6 +7,7 @@ import { watchBattery } from './device/battery';
 import { ScreenWakeLock } from './device/wakeLock';
 import { createBrowserLocationSource } from './location/browserLocationSource';
 import { FixWatchdog } from './location/fixWatchdog';
+import { GpsDiagnostics } from './location/gpsDiagnostics';
 import type { LocationFix } from './location/types';
 import { createMap } from './map/createMap';
 import { FollowUser } from './map/followUser';
@@ -24,6 +25,7 @@ import { Routes } from './routes/routes';
 import { loadLastView, saveLastPosition } from './storage/lastPosition';
 import { watchConnectivity } from './ui/connectivity';
 import { formatDistance, formatDuration } from './ui/format';
+import { GpsDetailsPanel } from './ui/gpsDetailsPanel';
 import { GpsStatus } from './ui/gpsStatus';
 import { HikeBar } from './ui/hikeBar';
 import { MapsPanel } from './ui/mapsPanel';
@@ -90,6 +92,7 @@ const routesPanel = new RoutesPanel(requireElement<HTMLDialogElement>('routes-pa
   openMaps: () => mapsPanel.open(),
 });
 const gpsStatus = new GpsStatus(requireElement('gps-chip'), requireElement('gps-banner'));
+const gpsDiagnostics = new GpsDiagnostics();
 
 // Bottom-right buttons. MapLibre stacks bottom controls upwards, so the one
 // added last sits on top: locate (most used) at the bottom, then Maps, Routes.
@@ -126,7 +129,10 @@ follow.onChange((following) => recenter.setActive(following));
 const watchdog = new FixWatchdog({
   recheckAfterMs: GPS_RECHECK_AFTER_MS,
   staleAfterMs: STALE_FIX_MS,
-  onRecheck: () => location.restart(),
+  onRecheck() {
+    gpsDiagnostics.rechecks += 1;
+    location.restart();
+  },
   onStale() {
     const fix = location.lastFix;
     if (!fix) return;
@@ -141,11 +147,13 @@ location.subscribe({
     // Use our own clock for staleness rather than fix.timestamp, which comes
     // from the device's GPS stack and isn't always in sync with Date.now().
     watchdog.fixReceived(Date.now());
+    gpsDiagnostics.fix(fix, Date.now());
     userLocation.update(fix);
     gpsStatus.showFix(fix, false);
     follow.handleFix(fix);
   },
   onError(kind) {
+    gpsDiagnostics.error(kind, Date.now());
     gpsStatus.showError(kind);
   },
 });
@@ -222,12 +230,16 @@ recorder.onSaveError(() => {
 
 void watchBattery((status) => hikeBar.setBattery(status));
 
+const gpsDetails = new GpsDetailsPanel(requireElement<HTMLDialogElement>('gps-panel'), gpsDiagnostics, recorder);
+requireElement('gps-chip').addEventListener('click', () => gpsDetails.open());
+
 // Browsers stop GPS while the app is in the background or the screen is locked.
 // The recorder already avoids drawing a fake straight line across the gap; this
 // tells the hiker why part of their track is missing.
 let hiddenWhileRecordingAt: number | null = null;
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
+    gpsDiagnostics.backgrounded += 1;
     hiddenWhileRecordingAt = recorder.state === 'recording' ? Date.now() : null;
     return;
   }

@@ -77,6 +77,15 @@ body {
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
 }
 
+.chip-button {
+  border: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .chip[data-tone='good'] {
   background: var(--good);
 }
@@ -161,6 +170,27 @@ body {
 .locate-btn.is-active {
   background: var(--blue);
   color: #fff;
+}
+
+/* ---- GPS details sheet ---- */
+
+.details-list {
+  margin: 12px 0 0;
+  padding: 4px 14px;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.details-list dt {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #555;
+}
+
+.details-list dd {
+  margin: 2px 0 10px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 /* ---- Hike controls (bottom-left, clear of the round buttons on the right) ---- */

@@ -1,5 +1,5 @@
 interface FixWatchdogOptions {
-  /** After this long without a fix, quietly ask for a fresh one. */
+  /** After this long without a fix, quietly ask for a fresh one, and again at this interval. */
   recheckAfterMs: number;
   /** After this long without a fix, tell the user the position may be out of date. */
   staleAfterMs: number;
@@ -15,31 +15,35 @@ interface FixWatchdogOptions {
  * standing still, and can leave the location watch stalled after an
  * interruption (a file picker, a notification). So a quiet period first
  * triggers a recheck, and only if that doesn't produce a fix either is the
- * position marked as stale. Time is passed in, so this is easy to test.
+ * position marked as stale. Rechecks keep going for as long as it's quiet:
+ * giving up after one attempt can leave the dot frozen for the rest of a hike.
+ * Time is passed in, so this is easy to test.
  */
 export class FixWatchdog {
   private lastFixAt: number | null = null;
-  private rechecked = false;
+  private lastRecheckAt: number | null = null;
   private stale = false;
 
   constructor(private readonly options: FixWatchdogOptions) {}
 
   fixReceived(now: number): void {
     this.lastFixAt = now;
-    this.rechecked = false;
+    this.lastRecheckAt = null;
     this.stale = false;
   }
 
   /** Call regularly (every few seconds). */
   tick(now: number): void {
-    if (this.lastFixAt === null || this.stale) return; // Nothing to watch yet, or already reported.
+    if (this.lastFixAt === null) return; // Nothing to watch until the first fix.
     const quietMs = now - this.lastFixAt;
 
-    if (quietMs >= this.options.staleAfterMs) {
+    if (quietMs >= this.options.staleAfterMs && !this.stale) {
       this.stale = true;
       this.options.onStale();
-    } else if (quietMs >= this.options.recheckAfterMs && !this.rechecked) {
-      this.rechecked = true;
+    }
+    const sinceRecheck = now - (this.lastRecheckAt ?? this.lastFixAt);
+    if (sinceRecheck >= this.options.recheckAfterMs) {
+      this.lastRecheckAt = now;
       this.options.onRecheck();
     }
   }

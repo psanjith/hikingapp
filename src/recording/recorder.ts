@@ -1,10 +1,17 @@
 import type { LocationFix, LocationSource } from '../location/types';
 import type { LonLat } from '../map/geo';
 import type { HikeStore } from './hikeStore';
-import { filterFix, type FilterPoint } from './trackFilter';
+import { filterFix, type FilterDecision, type FilterPoint } from './trackFilter';
 import type { Hike, HikePoint } from './types';
 
 export type RecorderState = 'idle' | 'recording' | 'paused';
+
+type SkipReason = Extract<FilterDecision, { action: 'skip' }>['reason'];
+
+/** What the jitter filter did with this session's GPS readings (for the GPS details screen). */
+export type FilterStats = { kept: number } & Record<SkipReason, number>;
+
+const emptyStats = (): FilterStats => ({ kept: 0, inaccurate: 0, 'too-close': 0, 'out-of-order': 0 });
 
 type Listener = () => void;
 
@@ -28,6 +35,7 @@ export class Recorder {
   private lastKept: FilterPoint | null = null;
   private segment = 0;
   private segmentHasPoints = false;
+  private stats = emptyStats();
   private stopListening: (() => void) | null = null;
   /** Saves run one after another, in the order points arrived. */
   private writes: Promise<void> = Promise.resolve();
@@ -57,6 +65,10 @@ export class Recorder {
   /** Whether the current segment is still waiting for its first good GPS reading. */
   get waitingForGps(): boolean {
     return this.state === 'recording' && !this.lastKept;
+  }
+
+  get filterStats(): Readonly<FilterStats> {
+    return this.stats;
   }
 
   /** Time spent recording, not counting pauses. */
@@ -93,6 +105,7 @@ export class Recorder {
     this.segment = Math.max(0, this.lines.length - 1);
     this.segmentHasPoints = points.length > 0;
     this.lastKept = null;
+    this.stats = emptyStats();
 
     // Count time up to the last saved point; after that, we don't know.
     if (hike.activeSince !== null) {
@@ -128,6 +141,7 @@ export class Recorder {
     this.segment = 0;
     this.segmentHasPoints = false;
     this.lastKept = null;
+    this.stats = emptyStats();
     this.listen();
     this.emit();
   }
@@ -185,7 +199,11 @@ export class Recorder {
 
     const candidate: FilterPoint = { lat: fix.lat, lon: fix.lon, time: fix.timestamp, accuracy: fix.accuracy };
     const decision = filterFix(this.lastKept, candidate);
-    if (decision.action === 'skip') return;
+    if (decision.action === 'skip') {
+      this.stats[decision.reason] += 1;
+      return;
+    }
+    this.stats.kept += 1;
     if (decision.newSegment) this.startNewSegment();
 
     const point: HikePoint = {

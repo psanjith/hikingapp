@@ -27,7 +27,8 @@
 
     <div class="top-overlay">
       <div class="chips">
-        <span id="gps-chip" class="chip" role="status" aria-live="polite"></span>
+        <!-- Tap for "GPS details". -->
+        <button id="gps-chip" class="chip chip-button" type="button" aria-live="polite"></button>
         <span id="offline-chip" class="chip" data-tone="off" hidden>Offline · GPS still works</span>
       </div>
       <p id="gps-banner" class="banner" role="alert" hidden></p>
@@ -101,6 +102,20 @@
         <p class="sheet-tip">
           Many trail websites and apps let you download a route as a GPX file. On iPhone, save it to
           the Files app, then import it here.
+        </p>
+      </div>
+    </dialog>
+
+    <dialog id="gps-panel" class="sheet" aria-labelledby="gps-panel-title">
+      <div class="sheet-body">
+        <header class="sheet-header">
+          <h2 id="gps-panel-title">GPS details</h2>
+          <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <dl class="details-list"></dl>
+        <p class="sheet-tip">
+          If GPS or recording seems wrong on a hike, take a screenshot of this screen. It shows what
+          the phone's GPS has actually been doing.
         </p>
       </div>
     </dialog>

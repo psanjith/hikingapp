@@ -11,6 +11,9 @@ const WATCH_OPTIONS: PositionOptions = {
   timeout: 30_000,
 };
 
+/** A one-off request used to jolt a quiet watch: same accuracy, fresh reading only. */
+const RECHECK_OPTIONS: PositionOptions = { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 };
+
 /**
  * LocationSource backed by navigator.geolocation.
  *
@@ -26,6 +29,8 @@ export function createBrowserLocationSource(
   let lastFix: LocationFix | null = null;
 
   function handlePosition(position: GeolocationPosition): void {
+    // A recheck and the watch can both answer; never step back to an older reading.
+    if (lastFix && position.timestamp < lastFix.timestamp) return;
     lastFix = toLocationFix(position);
     for (const listener of listeners) listener.onFix(lastFix);
   }
@@ -46,12 +51,19 @@ export function createBrowserLocationSource(
     watchId = null;
   }
 
-  // iOS sometimes leaves a watch silently stalled, e.g. after the app has been
-  // in the background. A new watch reports a fresh position straight away.
+  // iOS sometimes lets a watch go quiet: after the app has been in the
+  // background, after an interruption, and sometimes for no visible reason.
+  // Two things together recover it reliably:
+  //   - a one-off getCurrentPosition(), which iOS answers with a fresh reading;
+  //   - a new watch, started *before* the old one is cleared, so there's never
+  //     a moment with no request (which can make the phone power GPS down).
   function restart(): void {
-    if (watchId === null) return;
-    stopWatching();
-    startWatching();
+    if (!geolocation || watchId === null) return;
+    const previous = watchId;
+    watchId = geolocation.watchPosition(handlePosition, handleError, WATCH_OPTIONS);
+    geolocation.clearWatch(previous);
+    // Errors are ignored here: the watch reports anything that matters (e.g. permission).
+    geolocation.getCurrentPosition(handlePosition, () => {}, RECHECK_OPTIONS);
   }
 
   document.addEventListener('visibilitychange', () => {

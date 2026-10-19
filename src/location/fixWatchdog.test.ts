@@ -16,7 +16,7 @@ describe('FixWatchdog', () => {
     expect(onStale).not.toHaveBeenCalled();
   });
 
-  it('rechecks once after a quiet spell, before declaring GPS lost', () => {
+  it('rechecks after a quiet spell, before declaring GPS lost', () => {
     const { watchdog, onRecheck, onStale } = setup();
     watchdog.fixReceived(0);
     watchdog.tick(19_000);
@@ -36,16 +36,21 @@ describe('FixWatchdog', () => {
     expect(onStale).not.toHaveBeenCalled();
   });
 
-  it('reports a loss once if nothing arrives, and resets when GPS comes back', () => {
+  it('keeps rechecking for as long as it stays quiet, even after reporting a loss', () => {
     const { watchdog, onRecheck, onStale } = setup();
     watchdog.fixReceived(0);
-    watchdog.tick(20_000);
-    watchdog.tick(45_000);
-    watchdog.tick(60_000);
+    for (let t = 5_000; t <= 120_000; t += 5_000) watchdog.tick(t);
+    expect(onRecheck).toHaveBeenCalledTimes(6); // At 20, 40, 60, 80, 100 and 120 s.
     expect(onStale).toHaveBeenCalledTimes(1);
+  });
 
-    watchdog.fixReceived(70_000);
-    watchdog.tick(90_000);
-    expect(onRecheck).toHaveBeenCalledTimes(2);
+  it('resets when GPS comes back', () => {
+    const { watchdog, onStale } = setup();
+    watchdog.fixReceived(0);
+    watchdog.tick(45_000);
+    watchdog.fixReceived(50_000);
+    watchdog.tick(70_000);
+    watchdog.tick(95_000);
+    expect(onStale).toHaveBeenCalledTimes(2);
   });
 });
