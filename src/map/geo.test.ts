@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { boundsIntersect, metersPerPixel, tileBounds } from './geo';
+import {
+  boundsContain,
+  boundsIntersect,
+  boundsOfPoints,
+  distanceMeters,
+  lineLengthMeters,
+  metersPerPixel,
+  tileBounds,
+  type LonLat,
+} from './geo';
 
 describe('tileBounds', () => {
   it('covers the whole Web Mercator world at zoom 0', () => {
@@ -46,5 +55,61 @@ describe('metersPerPixel', () => {
 
   it('shrinks with latitude (cos(60°) = 0.5)', () => {
     expect(metersPerPixel(60, 10)).toBeCloseTo(metersPerPixel(0, 10) / 2, 6);
+  });
+});
+
+describe('distanceMeters', () => {
+  it('is zero for the same point', () => {
+    expect(distanceMeters([-123.08, 49.37], [-123.08, 49.37])).toBe(0);
+  });
+
+  it('matches a known distance: one degree of latitude is about 111.2 km', () => {
+    expect(distanceMeters([-123, 49], [-123, 50]) / 1000).toBeCloseTo(111.19, 1);
+  });
+
+  it('accounts for longitude lines getting closer together away from the equator', () => {
+    // One degree of longitude at 49°N is cos(49°) × 111.2 km ≈ 72.9 km.
+    expect(distanceMeters([-123, 49], [-122, 49]) / 1000).toBeCloseTo(72.95, 0);
+  });
+
+  it('measures a short trail-scale hop to within a metre', () => {
+    // 0.001° of latitude ≈ 111.2 m anywhere on Earth.
+    expect(distanceMeters([-123.08, 49.37], [-123.08, 49.371])).toBeCloseTo(111.2, 0);
+  });
+});
+
+describe('lineLengthMeters', () => {
+  it('adds up each leg of the line', () => {
+    const line: LonLat[] = [
+      [-123.08, 49.37],
+      [-123.08, 49.371],
+      [-123.08, 49.372],
+    ];
+    expect(lineLengthMeters(line)).toBeCloseTo(222.4, 0);
+  });
+
+  it('is zero for an empty or single-point line', () => {
+    expect(lineLengthMeters([])).toBe(0);
+    expect(lineLengthMeters([[-123, 49]])).toBe(0);
+  });
+});
+
+describe('boundsOfPoints / boundsContain', () => {
+  it('finds the box around a set of points', () => {
+    expect(
+      boundsOfPoints([
+        [-123.1, 49.4],
+        [-123.0, 49.3],
+        [-123.05, 49.5],
+      ]),
+    ).toEqual([-123.1, 49.3, -123.0, 49.5]);
+    expect(boundsOfPoints([])).toBeNull();
+  });
+
+  it('checks whether a trail fits inside a map region', () => {
+    const lowerMainland: [number, number, number, number] = [-123.55, 48.95, -121.3, 50.45];
+    expect(boundsContain(lowerMainland, [-123.1, 49.3, -123.0, 49.5])).toBe(true);
+    // Crosses the region edge (into Vancouver Island).
+    expect(boundsContain(lowerMainland, [-123.7, 49.3, -123.0, 49.5])).toBe(false);
   });
 });

@@ -44,8 +44,34 @@
           Downloaded maps work with no signal, and your location works without internet.
         </p>
         <p class="panel-notice" hidden></p>
-        <ul class="region-list"></ul>
+        <ul class="card-list"></ul>
         <p class="storage-summary"></p>
+      </div>
+    </dialog>
+
+    <dialog id="routes-panel" class="sheet" aria-labelledby="routes-panel-title">
+      <div class="sheet-body">
+        <header class="sheet-header">
+          <h2 id="routes-panel-title">Trail routes</h2>
+          <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <p class="sheet-intro">
+          Import a <strong>GPX file</strong> of the trail you plan to hike. It's saved on this phone, so
+          it still shows with no signal.
+        </p>
+        <!-- A <label> opens the file picker more reliably than input.click()
+             across browsers. No "accept" filter: iOS greys out .gpx files
+             when given one, so the file's contents are checked instead. -->
+        <label class="btn btn-primary btn-wide route-import">
+          Import GPX file
+          <input class="route-file" type="file" hidden />
+        </label>
+        <p class="panel-notice" hidden></p>
+        <ul class="card-list"></ul>
+        <p class="sheet-tip">
+          Many trail websites and apps let you download a route as a GPX file. On iPhone, save it to
+          the Files app, then import it here.
+        </p>
       </div>
     </dialog>
 

@@ -1,9 +1,10 @@
 import { ScreenWakeLock } from '../device/wakeLock';
+import { boundsArea, boundsContain } from '../map/geo';
 import { formatBytes } from '../ui/format';
 import { loadCatalog } from './catalog';
 import { MapDownloadError, type MapFileStore } from './mapFileStore';
 import type { TileRouter } from './tileRouter';
-import type { Catalog, RegionInfo, StoredRegion } from './types';
+import type { Bounds, Catalog, RegionInfo, StoredRegion } from './types';
 
 /** Everything the Maps screen needs to draw one region row. */
 export type RegionRow =
@@ -86,6 +87,20 @@ export class OfflineMaps {
       if (!offered.some((info) => info.id === stored.id)) rows.push({ state: 'downloaded', stored });
     }
     return rows;
+  }
+
+  /**
+   * Whether an area (e.g. an imported trail) is fully covered by a map on this
+   * phone, and if not, the smallest region that would cover it.
+   */
+  coverageFor(bounds: Bounds): { covered: boolean; suggestion: RegionInfo | null } {
+    const covered = [...this.stored.values()].some((r) => boundsContain(r.bounds, bounds));
+    const suggestion = covered
+      ? null
+      : ((this.catalog?.regions ?? [])
+          .filter((r) => boundsContain(r.bounds, bounds))
+          .sort((a, b) => boundsArea(a.bounds) - boundsArea(b.bounds))[0] ?? null);
+    return { covered, suggestion };
   }
 
   async download(id: string): Promise<void> {

@@ -1,25 +1,6 @@
 import type { OfflineMaps, RegionRow } from '../maps/offlineMaps';
+import { button, el } from './dom';
 import { formatBytes, formatMapVersion } from './format';
-
-/** Small helper so the rendering code reads top-to-bottom like the layout. */
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  props: { className?: string; text?: string } = {},
-  ...children: (Node | null)[]
-): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  if (props.className) node.className = props.className;
-  if (props.text) node.textContent = props.text;
-  for (const child of children) if (child) node.append(child);
-  return node;
-}
-
-function button(label: string, onClick: () => void, variant: 'primary' | 'secondary' = 'primary') {
-  const b = el('button', { className: `btn btn-${variant}`, text: label });
-  b.type = 'button';
-  b.addEventListener('click', onClick);
-  return b;
-}
 
 /**
  * The "Offline maps" sheet: lists regions with Download / Resume / Update /
@@ -34,7 +15,7 @@ export class MapsPanel {
     private readonly dialog: HTMLDialogElement,
     private readonly maps: OfflineMaps,
   ) {
-    this.list = dialog.querySelector('.region-list')!;
+    this.list = dialog.querySelector('.card-list')!;
     this.storage = dialog.querySelector('.storage-summary')!;
     this.notice = dialog.querySelector('.panel-notice')!;
 
@@ -83,9 +64,9 @@ export class MapsPanel {
 
     const item = el(
       'li',
-      { className: `region region-${row.state}` },
-      el('div', { className: 'region-name', text: name }),
-      description ? el('div', { className: 'region-desc', text: description }) : null,
+      { className: `card region-${row.state}` },
+      el('div', { className: 'card-name', text: name }),
+      description ? el('div', { className: 'card-desc', text: description }) : null,
     );
 
     switch (row.state) {
@@ -95,14 +76,14 @@ export class MapsPanel {
         item.append(
           el(
             'div',
-            { className: 'region-meta' },
+            { className: 'card-meta' },
             document.createTextNode(
               resuming ? `Paused at ${pct}% · ${formatBytes(row.info.bytes)}` : formatBytes(row.info.bytes),
             ),
           ),
           el(
             'div',
-            { className: 'region-actions' },
+            { className: 'card-actions' },
             button(resuming ? 'Resume' : 'Download', () => void this.maps.download(id)),
             resuming ? button('Delete', () => void this.maps.remove(id), 'secondary') : null,
           ),
@@ -112,16 +93,16 @@ export class MapsPanel {
 
       case 'downloading': {
         const pct = Math.floor((row.receivedBytes / row.info.bytes) * 100);
-        const bar = el('progress', { className: 'region-progress' });
+        const bar = el('progress', { className: 'card-progress' });
         bar.max = 100;
         bar.value = pct;
         item.append(
           bar,
           el('div', {
-            className: 'region-meta',
+            className: 'card-meta',
             text: `${pct}% · ${formatBytes(row.receivedBytes)} of ${formatBytes(row.info.bytes)} · keep the app open`,
           }),
-          el('div', { className: 'region-actions' }, button('Cancel', () => this.maps.cancel(id), 'secondary')),
+          el('div', { className: 'card-actions' }, button('Cancel', () => this.maps.cancel(id), 'secondary')),
         );
         break;
       }
@@ -129,12 +110,12 @@ export class MapsPanel {
       case 'downloaded': {
         item.append(
           el('div', {
-            className: 'region-meta',
+            className: 'card-meta',
             text: `✓ Saved on this phone · ${formatBytes(row.stored.bytes)} · map data from ${formatMapVersion(row.stored.version)}`,
           }),
           el(
             'div',
-            { className: 'region-actions' },
+            { className: 'card-actions' },
             row.update
               ? button(`Update (${formatBytes(row.update.bytes)})`, () => void this.maps.download(id))
               : null,
@@ -146,7 +127,7 @@ export class MapsPanel {
     }
 
     const error = row.state === 'downloading' ? undefined : row.error;
-    if (error) item.append(el('p', { className: 'region-error', text: error }));
+    if (error) item.append(el('p', { className: 'card-error', text: error }));
     return item;
   }
 

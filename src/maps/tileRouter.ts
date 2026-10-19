@@ -1,6 +1,6 @@
 import * as maplibregl from 'maplibre-gl';
 import { FetchSource, FileSource, PMTiles } from 'pmtiles';
-import { boundsIntersect, tileBounds } from '../map/geo';
+import { boundsArea, boundsIntersect, tileBounds } from '../map/geo';
 import type { Bounds } from './types';
 
 export const TILE_PROTOCOL = 'hike';
@@ -40,7 +40,7 @@ export class TileRouter {
   setLocalRegions(regions: { id: string; bounds: Bounds; file: File }[]): void {
     this.local = regions
       .map((r) => ({ id: r.id, bounds: r.bounds, pmtiles: new PMTiles(new FileSource(r.file)) }))
-      .sort((a, b) => area(a.bounds) - area(b.bounds));
+      .sort((a, b) => boundsArea(a.bounds) - boundsArea(b.bounds));
   }
 
   setOnlineSource(url: string | null, bounds: Bounds | null): void {
@@ -90,8 +90,4 @@ export class TileRouter {
     // buffer each time: MapLibre transfers ownership of it to its worker.
     return new ArrayBuffer(0);
   }
-}
-
-function area([w, s, e, n]: Bounds): number {
-  return (e - w) * (n - s);
 }

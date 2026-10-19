@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, formatMapVersion } from './format';
+import { formatBytes, formatDistance, formatMapVersion } from './format';
 
 describe('formatBytes', () => {
   it('uses whole units under a gigabyte', () => {
@@ -24,5 +24,18 @@ describe('formatMapVersion', () => {
 
   it('passes through anything unexpected', () => {
     expect(formatMapVersion('latest')).toBe('latest');
+  });
+});
+
+describe('formatDistance', () => {
+  it('uses metres for short distances, rounded to 10 m', () => {
+    expect(formatDistance(0)).toBe('0 m');
+    expect(formatDistance(847)).toBe('850 m');
+  });
+
+  it('switches to kilometres with one decimal, without ever showing "1000 m"', () => {
+    expect(formatDistance(996)).toBe('1.0 km');
+    expect(formatDistance(2_870)).toBe('2.9 km');
+    expect(formatDistance(21_100)).toBe('21.1 km');
   });
 });

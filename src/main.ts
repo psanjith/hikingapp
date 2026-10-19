@@ -7,16 +7,20 @@ import { createBrowserLocationSource } from './location/browserLocationSource';
 import type { LocationFix } from './location/types';
 import { createMap } from './map/createMap';
 import { FollowUser } from './map/followUser';
+import { RouteLayer } from './map/routeLayer';
 import { UserLocationLayer } from './map/userLocationLayer';
 import { createOpfsMapFileStore } from './maps/mapFileStore';
 import { OfflineMaps } from './maps/offlineMaps';
 import { tileUrl } from './maps/style';
 import { TileRouter } from './maps/tileRouter';
+import { createIndexedDbRouteStore } from './routes/routeStore';
+import { Routes } from './routes/routes';
 import { loadLastView, saveLastPosition } from './storage/lastPosition';
 import { watchConnectivity } from './ui/connectivity';
 import { GpsStatus } from './ui/gpsStatus';
 import { MapsPanel } from './ui/mapsPanel';
-import { LOCATE_ICON, MAPS_ICON, MapButtonControl } from './ui/mapButtonControl';
+import { LOCATE_ICON, MAPS_ICON, MapButtonControl, ROUTES_ICON } from './ui/mapButtonControl';
+import { RoutesPanel } from './ui/routesPanel';
 import { registerServiceWorker } from './ui/serviceWorker';
 import { showToast } from './ui/toast';
 
@@ -54,15 +58,31 @@ void offlineMaps.init().then(() => {
   }
 });
 
+// --- Imported GPX routes ---------------------------------------------------------
+
+// Created before the location layer, so the route is drawn underneath the blue dot.
+const routeLayer = new RouteLayer(map);
+const routes = new Routes(createIndexedDbRouteStore());
+routes.subscribe(() => routeLayer.show(routes.active));
+void routes.init();
+
 // --- Live location -----------------------------------------------------------
 
 const location = createBrowserLocationSource();
 const userLocation = new UserLocationLayer(map);
 const follow = new FollowUser(map);
+
+const routesPanel = new RoutesPanel(requireElement<HTMLDialogElement>('routes-panel'), routes, offlineMaps, {
+  focus(route) {
+    follow.stop();
+    routeLayer.fitTo(route);
+  },
+  openMaps: () => mapsPanel.open(),
+});
 const gpsStatus = new GpsStatus(requireElement('gps-chip'), requireElement('gps-banner'));
 
 // Bottom-right buttons. MapLibre stacks bottom controls upwards, so the one
-// added last sits on top: locate (most used) at the bottom, Maps above it.
+// added last sits on top: locate (most used) at the bottom, then Maps, Routes.
 const recenter = new MapButtonControl({
   label: 'Centre map on my location',
   icon: LOCATE_ICON,
@@ -76,6 +96,15 @@ map.addControl(
     icon: MAPS_ICON,
     caption: 'Maps',
     onClick: () => mapsPanel.open(),
+  }),
+  'bottom-right',
+);
+map.addControl(
+  new MapButtonControl({
+    label: 'Trail routes (GPX)',
+    icon: ROUTES_ICON,
+    caption: 'Routes',
+    onClick: () => routesPanel.open(),
   }),
   'bottom-right',
 );

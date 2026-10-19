@@ -16,3 +16,9 @@ export function formatMapVersion(version: string): string {
     year: 'numeric',
   });
 }
+
+/** "850 m", "2.9 km": plain-language distances, precise enough for a trail sign. */
+export function formatDistance(meters: number): string {
+  if (meters < 995) return `${Math.round(meters / 10) * 10} m`;
+  return `${(meters / 1000).toFixed(1)} km`;
+}

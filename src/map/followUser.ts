@@ -7,7 +7,7 @@ import type { LocationFix } from '../location/types';
  *
  * Following starts on: the first GPS fix, and whenever the user taps the
  * "centre on me" button. It stops as soon as the user drags the map, so the
- * map never fights them while they're exploring.
+ * map never fights them while they're exploring, or when the app shows a route.
  */
 export class FollowUser {
   private following = true;
@@ -50,6 +50,15 @@ export class FollowUser {
       zoom: Math.max(this.map.getZoom(), LOCATE_ZOOM),
       duration: 800,
     });
+  }
+
+  /**
+   * Stop following because the app itself is moving the map to show something
+   * else (e.g. zooming to an imported route), so the next GPS fix doesn't
+   * immediately pull the map back.
+   */
+  stop(): void {
+    this.setFollowing(false);
   }
 
   private setFollowing(following: boolean): void {

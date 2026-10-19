@@ -78,6 +78,12 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - **In the app:** downloads run in a Web Worker writing to OPFS with sync access handles, resumable via HTTP Range. IndexedDB records only fully-verified downloads. A custom MapLibre protocol (`hike://`, `TileRouter`) serves tiles from downloaded regions first, then streams the all-BC file from R2 when online. Style = Protomaps "light" + custom bold trail layers; fonts/sprites are bundled in `public/basemap` and precached.
 - Local dev: `node scripts/build-maps.mjs --out public/dev-maps --only lower-mainland` and `VITE_MAPS_BASE_URL=/hikingapp/dev-maps/` in `.env.local`.
 
+**GPX import (Stage 3):**
+- `src/gpx/parseGpx.ts` reads GPX 1.0/1.1 by element local name (namespace-agnostic): each `<trkseg>` and `<rte>` becomes a separate line (no fake straight lines across gaps), `<wpt>` become labelled markers. Bad points are skipped; non-GPX files get a plain-language `GpxError`. Tests run under jsdom for `DOMParser`.
+- Routes are saved in IndexedDB (`routes` store, DB v2) behind a `RouteStore` interface; one route is "active" (shown) at a time, remembered in localStorage. Only one so the map stays simple and the future off-route alert has a single trail to compare against.
+- After import the map fits the route and stops "follow me". `OfflineMaps.coverageFor(bounds)` warns if no downloaded region contains the route and suggests the smallest catalog region that does.
+- The file input has no `accept` filter on purpose: iOS greys out `.gpx` files when one is set. Contents are validated instead.
+
 **Recording & distance:**
 - Save a GPS point every few seconds (lat, lon, time, accuracy).
 - **Filter GPS jitter**: skip points within a few metres of the last one and/or with poor accuracy, so distance doesn't creep up while standing still.
