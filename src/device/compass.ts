@@ -86,6 +86,35 @@ export class Compass {
     }
   }
 
+  /**
+   * Call at the start of a tap handler: on iPhone, asks for compass access if
+   * it isn't working yet. Must run before any `await` in the handler, while
+   * iOS still counts it as part of the tap.
+   */
+  askFromTap(): void {
+    if (Compass.needsPermission && !this.isWorking) void this.requestPermission();
+  }
+
+  /**
+   * Asks for compass access on the first tap anywhere after the app opens.
+   *
+   * iOS never lets a page ask on its own: requestPermission() only works as
+   * part of a tap, and is silently refused otherwise. The first touch is the
+   * earliest moment possible. If access was already given, iOS answers
+   * straight away with no prompt; it can also forget between launches, which
+   * is why this runs every time.
+   */
+  askOnFirstTap(): void {
+    if (!Compass.needsPermission) return;
+    const ask = () => {
+      document.removeEventListener('touchend', ask, true);
+      document.removeEventListener('click', ask, true);
+      this.askFromTap();
+    };
+    document.addEventListener('touchend', ask, true);
+    document.addEventListener('click', ask, true);
+  }
+
   /** Calls `listener` with every new heading. Returns a function that stops it. */
   subscribe(listener: (heading: number) => void): () => void {
     this.listeners.add(listener);

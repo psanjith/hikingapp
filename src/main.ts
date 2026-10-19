@@ -97,6 +97,7 @@ const userLocation = new UserLocationLayer(map);
 const follow = new FollowUser(map);
 const compass = new Compass();
 compass.subscribe((heading) => userLocation.setHeading(heading));
+compass.askOnFirstTap();
 
 const routesPanel = new RoutesPanel(requireElement<HTMLDialogElement>('routes-panel'), routes, offlineMaps, {
   focus(route) {
@@ -106,7 +107,7 @@ const routesPanel = new RoutesPanel(requireElement<HTMLDialogElement>('routes-pa
   openMaps: () => mapsPanel.open(),
 });
 const installPrompt = new InstallPrompt();
-const readyPanel = new ReadyPanel(requireElement<HTMLDialogElement>('ready-panel'), offlineMaps, installPrompt, {
+const readyPanel = new ReadyPanel(requireElement<HTMLDialogElement>('ready-panel'), offlineMaps, installPrompt, compass, {
   openMaps: () => mapsPanel.open(),
   openRoutes: () => routesPanel.open(),
 });
@@ -120,9 +121,8 @@ const recenter = new MapButtonControl({
   icon: LOCATE_ICON,
   className: 'locate-btn',
   onClick() {
-    // iPhones only show the compass permission prompt in response to a tap,
-    // and "centre on me" is when someone wants to know which way they face.
-    if (Compass.needsPermission && !compass.isWorking) void compass.requestPermission();
+    // "Centre on me" is when someone wants to know which way they face.
+    compass.askFromTap();
     follow.recenter(location.lastFix);
   },
 });
@@ -274,6 +274,8 @@ function defaultHikeName(start: Date): string {
 }
 
 async function startHike(): Promise<void> {
+  // Before any await: iOS only allows the compass prompt as part of a tap.
+  compass.askFromTap();
   try {
     await recorder.start(defaultHikeName(new Date()));
   } catch {
@@ -433,8 +435,7 @@ map.addControl(
     icon: COMPASS_ICON,
     className: 'map-btn-small',
     onClick() {
-      // Ask straight from the tap (an iOS rule); it's instant if already allowed.
-      if (Compass.needsPermission && !compass.isWorking) void compass.requestPermission();
+      compass.askFromTap();
       compassPanel.open();
     },
   }),

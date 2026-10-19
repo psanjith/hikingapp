@@ -1,3 +1,4 @@
+import { Compass } from '../device/compass';
 import { isInstalled, isIos, type InstallPrompt } from '../device/install';
 import type { OfflineMaps } from '../maps/offlineMaps';
 import { button, el } from './dom';
@@ -27,6 +28,7 @@ export class ReadyPanel {
     private readonly dialog: HTMLDialogElement,
     private readonly maps: OfflineMaps,
     private readonly install: InstallPrompt,
+    private readonly compass: Compass,
     private readonly actions: ReadyPanelActions,
   ) {
     this.steps = dialog.querySelector('.ready-steps')!;
@@ -48,6 +50,13 @@ export class ReadyPanel {
     };
     maps.subscribe(rerender);
     install.onChange(rerender);
+    // Tick the compass step as soon as the first reading arrives.
+    let compassWorking = false;
+    compass.subscribe(() => {
+      if (compassWorking === compass.isWorking) return;
+      compassWorking = compass.isWorking;
+      rerender();
+    });
   }
 
   /** True until the user has seen and closed the checklist once. */
@@ -87,7 +96,7 @@ export class ReadyPanel {
 
   private render(): void {
     const regions = this.maps.downloadedRegionNames;
-    this.steps.replaceChildren(
+    const steps = [
       this.step(1, 'Add the app to your Home Screen', isInstalled(), ...this.installHelp()),
       this.step(
         2,
@@ -111,14 +120,29 @@ export class ReadyPanel {
                 : 'When your phone asks, tap Allow. GPS works with no cell signal.',
         }),
       ),
+      // Only iPhones need this: Android shares the compass without asking.
+      Compass.needsPermission
+        ? this.step(
+            4,
+            'Show which way you’re facing',
+            this.compass.isWorking,
+            el('p', {
+              text: this.compass.isWorking
+                ? 'The cone on your blue dot points where your phone points.'
+                : 'Lets the blue dot show which way your phone points. Tap Allow when asked.',
+            }),
+            this.compass.isWorking ? null : button('Allow compass', () => this.compass.askFromTap()),
+          )
+        : null,
       this.step(
-        4,
+        Compass.needsPermission ? 5 : 4,
         'Optional: add the trail you plan to hike',
         false,
         el('p', { text: 'Import a GPX file and the app will warn you if you wander off it.' }),
         button('Add a route', () => this.go(this.actions.openRoutes), 'secondary'),
       ),
-    );
+    ];
+    this.steps.replaceChildren(...steps.filter((step) => step !== null));
   }
 
   private installHelp(): (HTMLElement | null)[] {
