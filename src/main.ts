@@ -49,6 +49,7 @@ import { CompassPanel } from './ui/compassPanel';
 import { COMPASS_ICON, HIKES_ICON, LOCATE_ICON, MAPS_ICON, MapButtonControl, ROUTES_ICON } from './ui/mapButtonControl';
 import { MapsPanel } from './ui/mapsPanel';
 import { ReadyPanel } from './ui/readyPanel';
+import { RecordIntro } from './ui/recordIntro';
 import { RouteAlert } from './ui/routeAlert';
 import { RoutesPanel } from './ui/routesPanel';
 import { SharePanel } from './ui/sharePanel';
@@ -249,9 +250,14 @@ location.subscribe({
 
 const hikeStore = createIndexedDbHikeStore();
 const recorder = new Recorder(hikeStore, location);
+const recordIntro = new RecordIntro(requireElement<HTMLDialogElement>('record-intro'));
 const recordingWakeLock = new ScreenWakeLock();
 const hikeBar = new HikeBar(requireElement('hike-dock'), recorder, {
-  start: () => void startHike(),
+  start() {
+    // Asked here, during the tap: once the intro dialog is up, it would be too late (iOS rule).
+    compass.askFromTap();
+    recordIntro.beforeStarting(() => void startHike());
+  },
   finish: () => void finishHike(),
 });
 
@@ -277,8 +283,6 @@ function defaultHikeName(start: Date): string {
 }
 
 async function startHike(): Promise<void> {
-  // Before any await: iOS only allows the compass prompt as part of a tap.
-  compass.askFromTap();
   try {
     await recorder.start(defaultHikeName(new Date()));
   } catch {

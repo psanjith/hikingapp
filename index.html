@@ -154,11 +154,34 @@
         </p>
         <ol class="card-list ready-steps"></ol>
         <div class="safety-note">
-          <strong>A phone is a helper, not a plan.</strong> Tell someone where you're going and when
-          you'll be back. Bring water, warm layers, a headlamp and a power bank. Turn back if the
+          <strong>A phone is a helper, not a plan.</strong> This app only records and tracks you
+          while it's open on screen, so don't lock your phone or switch apps for long while
+          recording. Tell someone where you're going and when you'll be back. Bring water, warm layers, a headlamp and a power bank. Turn back if the
           weather, the trail or the daylight isn't on your side. In an emergency, call 911.
         </div>
         <button class="btn btn-primary btn-wide ready-done" type="button">Got it</button>
+      </div>
+    </dialog>
+
+    <dialog id="record-intro" class="sheet" aria-labelledby="record-intro-title">
+      <div class="sheet-body">
+        <header class="sheet-header">
+          <h2 id="record-intro-title">Before you start</h2>
+          <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <div class="panel-notice intro-key">
+          <strong>Keep this app open on screen while you hike.</strong> If you lock your phone or
+          switch to another app, your phone stops sharing your location with it. That part of
+          your hike won't be recorded, and the map won't know where you are.
+        </div>
+        <ul class="intro-points">
+          <li>The screen stays on by itself while recording, so you don't need to touch it.</li>
+          <li>A screen that's always on uses a lot of battery. Bring a power bank on long hikes.</li>
+          <li>Checking a text quickly is OK. Recording picks up again when you come back, but that
+            stretch will be missing.</li>
+        </ul>
+        <button class="btn btn-primary btn-wide intro-start" type="button">Got it, start hike</button>
+        <button class="btn btn-secondary btn-wide intro-cancel" type="button">Not now</button>
       </div>
     </dialog>
 

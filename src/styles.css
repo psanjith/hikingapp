@@ -313,6 +313,27 @@ body {
   font-weight: 800;
 }
 
+/* ---- Before you start (first recording) ---- */
+
+.intro-key {
+  margin-top: 12px;
+}
+
+.intro-points {
+  margin: 14px 0 18px;
+  padding-left: 20px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.intro-points li + li {
+  margin-top: 8px;
+}
+
+.intro-cancel {
+  margin-bottom: 4px;
+}
+
 /* ---- Share image ---- */
 
 /* A checkerboard behind the preview is the usual way to show "transparent". */

@@ -116,6 +116,11 @@ This file is the handoff from a planning conversation. Read it fully before writ
 **Sharing (added after Stage 6, at the owner's request):**
 - Recorded hikes are largely for **showing off on social media**. "Share image" (past-hike card, and the "Hike saved" toast) renders a **transparent 1080 px-wide PNG** of the route shape + optional distance/time (`src/share/shareImage.ts`, canvas), white or black with a contrasting soft shadow so it reads on any photo. **Copy image** (async Clipboard API, paste as a sticker) or **Save image** (share sheet). Route fitting shared with list thumbnails (`src/map/fitTrack.ts`).
 
+**Background recording / native app (discussed 2026-10-19):**
+- The owner sees "you must keep the app open" as a **safety issue**. No web app can get location with the screen locked or in the background (iOS stops it for all websites incl. Home Screen apps; Android browsers too). The only real fix is a **native app via Capacitor** + a background-location plugin (free option: `@capacitor-community/background-geolocation`), with the existing `LocationSource`/`HikeStore`/files interfaces swapped for native ones.
+- Decision for now: **not yet** — stay a web app. Owner is **undecided on Apple's Developer Program ($99 USD/yr)**, needed for TestFlight/App Store; a free Apple ID can run it on their own iPhone (re-install every 7 days). Android: $25 Play fee or sideload.
+- Meanwhile the limit is made unmissable: a one-time "Before you start" screen on first Start hike (`src/ui/recordIntro.ts`), a line in the checklist's safety note, the recording status line, and a toast after the app was backgrounded.
+
 **Future-proofing for a native app:**
 - Later we'll wrap the same code with **Capacitor** to make real Android/iOS apps (which fixes background recording).
 - **Isolate GPS tracking and file/storage access behind clean interfaces/modules** so they can be swapped for native plugins later without rewriting the app.
