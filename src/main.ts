@@ -78,7 +78,7 @@ void offlineMaps.init().then(() => {
 // then the hike being recorded, then (below) the blue dot on top of everything.
 const routeLayer = new RouteLayer(map);
 const pastHikeLayer = new TrackLayer(map, 'past-hike', '#c2185b'); // Pink: a hike from history.
-const trackLayer = new TrackLayer(map, 'recorded-track', '#ef6c00'); // Orange: the hike in progress.
+const trackLayer = new TrackLayer(map, 'recorded-track', '#00838f'); // Teal: the hike in progress.
 const routeStore = createIndexedDbRouteStore();
 const routes = new Routes(routeStore);
 routes.subscribe(() => routeLayer.show(routes.active));
