@@ -18,6 +18,7 @@ import { HikeHistory } from './history/hikeHistory';
 import { createBrowserLocationSource } from './location/browserLocationSource';
 import { FixWatchdog } from './location/fixWatchdog';
 import { GpsDiagnostics } from './location/gpsDiagnostics';
+import { smoothLocationSource } from './location/smoothing';
 import type { LocationFix } from './location/types';
 import { createMap } from './map/createMap';
 import { fitMapTo } from './map/fitBounds';
@@ -92,7 +93,8 @@ void routes.init();
 
 // --- Live location -----------------------------------------------------------
 
-const location = createBrowserLocationSource();
+// Smoothed, so a single bad reading doesn't throw the dot (or the recorded line) around.
+const location = smoothLocationSource(createBrowserLocationSource());
 const userLocation = new UserLocationLayer(map);
 const follow = new FollowUser(map);
 const compass = new Compass();

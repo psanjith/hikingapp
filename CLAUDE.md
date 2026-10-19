@@ -86,6 +86,9 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - The file input has no `accept` filter on purpose: iOS greys out `.gpx` files when one is set. Contents are validated instead.
 - Verified on iPhone (Oct 2026): import from Files, route drawn and zoomed to.
 
+**Position smoothing:**
+- All location goes through `smoothLocationSource` (`src/location/smoothing.ts`): a Kalman filter weighting each reading by its accuracy (assumed max speed 3 m/s for the prediction step). Vague readings barely move the dot; sharp ones move it almost fully; a sharp (≤ ±20 m) reading > 3σ away is treated as real movement and followed immediately. The reported accuracy stays the GPS's raw figure (never look more certain than we are). Indoors GPS is inherently ±20–100 m; outdoors ±3–10 m (±10–30 m under canopy) — no app can beat the phone's chip.
+
 **Recording & distance:**
 - Save a GPS point every few seconds (lat, lon, time, accuracy).
 - **Filter GPS jitter**: skip points within a few metres of the last one and/or with poor accuracy, so distance doesn't creep up while standing still.
