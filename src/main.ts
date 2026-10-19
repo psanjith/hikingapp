@@ -2,23 +2,30 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './styles.css';
 
 import type { VectorTileSource } from 'maplibre-gl';
-import { DEFAULT_VIEW, GPS_RECHECK_AFTER_MS, STALE_FIX_MS } from './config';
+import { BACKGROUND_WARNING_MS, DEFAULT_VIEW, GPS_RECHECK_AFTER_MS, STALE_FIX_MS } from './config';
+import { watchBattery } from './device/battery';
+import { ScreenWakeLock } from './device/wakeLock';
 import { createBrowserLocationSource } from './location/browserLocationSource';
 import { FixWatchdog } from './location/fixWatchdog';
 import type { LocationFix } from './location/types';
 import { createMap } from './map/createMap';
 import { FollowUser } from './map/followUser';
 import { RouteLayer } from './map/routeLayer';
+import { TrackLayer } from './map/trackLayer';
 import { UserLocationLayer } from './map/userLocationLayer';
 import { createOpfsMapFileStore } from './maps/mapFileStore';
 import { OfflineMaps } from './maps/offlineMaps';
 import { tileUrl } from './maps/style';
 import { TileRouter } from './maps/tileRouter';
+import { createIndexedDbHikeStore } from './recording/hikeStore';
+import { Recorder } from './recording/recorder';
 import { createIndexedDbRouteStore } from './routes/routeStore';
 import { Routes } from './routes/routes';
 import { loadLastView, saveLastPosition } from './storage/lastPosition';
 import { watchConnectivity } from './ui/connectivity';
+import { formatDistance, formatDuration } from './ui/format';
 import { GpsStatus } from './ui/gpsStatus';
+import { HikeBar } from './ui/hikeBar';
 import { MapsPanel } from './ui/mapsPanel';
 import { LOCATE_ICON, MAPS_ICON, MapButtonControl, ROUTES_ICON } from './ui/mapButtonControl';
 import { RoutesPanel } from './ui/routesPanel';
@@ -61,8 +68,10 @@ void offlineMaps.init().then(() => {
 
 // --- Imported GPX routes ---------------------------------------------------------
 
-// Created before the location layer, so the route is drawn underneath the blue dot.
+// Map layers are created in drawing order: imported route, then the hike being
+// recorded on top of it, then (below) the blue dot on top of everything.
 const routeLayer = new RouteLayer(map);
+const trackLayer = new TrackLayer(map);
 const routes = new Routes(createIndexedDbRouteStore());
 routes.subscribe(() => routeLayer.show(routes.active));
 void routes.init();
@@ -139,6 +148,99 @@ location.subscribe({
   onError(kind) {
     gpsStatus.showError(kind);
   },
+});
+
+// --- Hike recording -------------------------------------------------------------
+
+const recorder = new Recorder(createIndexedDbHikeStore(), location);
+const recordingWakeLock = new ScreenWakeLock();
+const hikeBar = new HikeBar(requireElement('hike-dock'), recorder, {
+  start: () => void startHike(),
+  finish: () => void finishHike(),
+});
+
+recorder.subscribe(() => trackLayer.show(recorder.track));
+
+// Keep the screen on only while actually recording: browsers stop GPS when the
+// screen locks. While paused, the phone may sleep and save battery.
+let lastRecorderState = recorder.state;
+recorder.subscribe(() => {
+  if (recorder.state === lastRecorderState) return;
+  lastRecorderState = recorder.state;
+  if (recorder.state === 'recording') void recordingWakeLock.acquire();
+  else void recordingWakeLock.release();
+});
+
+async function startHike(): Promise<void> {
+  const date = new Date().toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+  try {
+    await recorder.start(`Hike on ${date}`);
+  } catch {
+    showToast("Couldn't start recording because this phone's storage isn't available.", { durationMs: 8_000 });
+    return;
+  }
+  follow.recenter(location.lastFix);
+  const screenStaysOn = await recordingWakeLock.acquire();
+  showToast(
+    screenStaysOn
+      ? 'Recording. The screen will stay on. Keep this app open: phones stop GPS when the screen locks.'
+      : 'Recording. Your screen may lock by itself, which stops GPS. Set Auto-Lock to Never (Settings → Display & Brightness) while you hike.',
+    { durationMs: 10_000 },
+  );
+}
+
+async function finishHike(): Promise<void> {
+  const hike = recorder.current;
+  if (!hike) return;
+  const summary = `${formatDistance(hike.distanceMeters)} · ${formatDuration(recorder.elapsedMs())}`;
+  const question =
+    hike.pointCount < 2
+      ? 'Nothing has been recorded yet. Stop and discard this hike?'
+      : `Finish and save this hike?\n\n${summary}`;
+  if (!confirm(question)) return;
+  const saved = await recorder.finish();
+  showToast(saved ? `Hike saved · ${summary}` : 'Hike discarded.', { durationMs: 6_000 });
+}
+
+// Bring back a hike that was in progress when the app was closed or crashed.
+void recorder.restore().then((hike) => {
+  if (!hike) return;
+  showToast(
+    `Your hike in progress was saved (${formatDistance(hike.distanceMeters)}). It's paused: tap Resume to keep recording.`,
+    { durationMs: 15_000 },
+  );
+});
+
+let lastSaveErrorAt = 0;
+recorder.onSaveError(() => {
+  if (Date.now() - lastSaveErrorAt < 60_000) return; // One warning a minute is enough.
+  lastSaveErrorAt = Date.now();
+  showToast("Couldn't save the latest part of your hike. Your phone may be out of storage space.", {
+    durationMs: 10_000,
+  });
+});
+
+void watchBattery((status) => hikeBar.setBattery(status));
+
+// Browsers stop GPS while the app is in the background or the screen is locked.
+// The recorder already avoids drawing a fake straight line across the gap; this
+// tells the hiker why part of their track is missing.
+let hiddenWhileRecordingAt: number | null = null;
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    hiddenWhileRecordingAt = recorder.state === 'recording' ? Date.now() : null;
+    return;
+  }
+  if (hiddenWhileRecordingAt === null) return;
+  const awayMs = Date.now() - hiddenWhileRecordingAt;
+  hiddenWhileRecordingAt = null;
+  if (awayMs > BACKGROUND_WARNING_MS) {
+    const minutes = Math.max(1, Math.round(awayMs / 60_000));
+    showToast(
+      `The app was in the background for ${minutes} min. Phones can stop GPS then, so part of your track may be missing. Keep this app open while recording.`,
+      { durationMs: 12_000 },
+    );
+  }
 });
 
 // Remember the last position when the app is closed or backgrounded.

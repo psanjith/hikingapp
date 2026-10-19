@@ -23,7 +23,8 @@ export function createMap(container: HTMLElement, view: MapView): maplibregl.Map
     style: buildMapStyle(MAP_DATA_MAXZOOM, 0),
     center: view.center,
     zoom: view.zoom,
-    attributionControl: { compact: true },
+    // Added below instead, bottom-left, where it stays clear of the hike controls.
+    attributionControl: false,
     // Keep north at the top. A rotating map is a common source of confusion
     // for beginners, and a fixed orientation makes paper-map habits carry over.
     dragRotate: false,
@@ -34,6 +35,7 @@ export function createMap(container: HTMLElement, view: MapView): maplibregl.Map
   map.keyboard.disableRotation();
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+  map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
   map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
 
   return map;

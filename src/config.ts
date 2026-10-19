@@ -27,3 +27,20 @@ export const STALE_FIX_MS = 45_000;
 /** GPS accuracy thresholds (metres) for the plain-language signal indicator. */
 export const GPS_GOOD_ACCURACY_M = 20;
 export const GPS_FAIR_ACCURACY_M = 50;
+
+/** Recording: GPS readings less accurate than this are ignored (metres). */
+export const RECORD_MAX_ACCURACY_M = 40;
+/** Recording: the smallest movement that counts, however good the GPS (metres). */
+export const RECORD_MIN_MOVE_M = 5;
+/** Recording: the most movement we'll ever demand before counting a step (metres). */
+export const RECORD_MAX_MOVE_M = 15;
+/**
+ * Recording: a jump this far after this long with no readings (GPS lost, or the
+ * phone stopped GPS while locked) starts a new segment instead of drawing a
+ * straight line across terrain the hiker may not have crossed.
+ */
+export const RECORD_GAP_MS = 60_000;
+export const RECORD_GAP_M = 100;
+
+/** If the app is hidden this long while recording, explain the possible gap in the track. */
+export const BACKGROUND_WARNING_MS = 30_000;

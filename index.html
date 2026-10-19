@@ -33,6 +33,36 @@
       <p id="gps-banner" class="banner" role="alert" hidden></p>
     </div>
 
+    <div id="hike-dock" class="hike-dock">
+      <button class="start-hike" type="button">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path d="M7 4.5v15l12-7.5-12-7.5Z" fill="currentColor" />
+        </svg>
+        Start hike
+      </button>
+      <section class="hike-bar" aria-label="Hike in progress" hidden>
+        <div class="hike-stats">
+          <div class="stat">
+            <span class="stat-value hike-distance">0.00</span>
+            <span class="stat-label">km</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value hike-time">0:00</span>
+            <span class="stat-label">time</span>
+          </div>
+          <div class="stat hike-battery-stat" hidden>
+            <span class="stat-value hike-battery"></span>
+            <span class="stat-label hike-battery-label">battery</span>
+          </div>
+        </div>
+        <p class="hike-status" role="status"></p>
+        <div class="hike-actions">
+          <button class="btn btn-secondary hike-pause" type="button">Pause</button>
+          <button class="btn btn-secondary hike-finish" type="button">Finish</button>
+        </div>
+      </section>
+    </div>
+
     <dialog id="maps-panel" class="sheet" aria-labelledby="maps-panel-title">
       <div class="sheet-body">
         <header class="sheet-header">

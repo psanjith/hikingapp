@@ -17,7 +17,7 @@ Apps with offline maps and GPX import are either paid or confusing. This one is 
 | 1 | App shell, map, live location, opens offline | ✅ |
 | 2 | Downloadable offline map regions | ✅ |
 | 3 | GPX import | ✅ |
-| 4 | Hike recording (pause/resume, distance, crash-safe autosave) | ⏳ |
+| 4 | Hike recording (pause/resume, distance, crash-safe autosave) | ✅ |
 | 5 | Hike history and GPX export | ⏳ |
 | 6 | Safety polish (off-route alert, battery warning, install prompt) | ⏳ |
 | 7 | Field testing | ⏳ |

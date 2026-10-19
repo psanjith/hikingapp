@@ -1,6 +1,6 @@
 /**
  * Keeps the phone screen on while something important is happening (a map
- * download now; hike recording from Stage 4). Browsers pause web apps when the
+ * download, or recording a hike). Browsers pause web apps when the
  * screen locks, so this is the most reliable way to keep working on the web.
  *
  * The browser drops the lock whenever the app is hidden, so we re-request it
@@ -20,9 +20,11 @@ export class ScreenWakeLock {
     return 'wakeLock' in navigator;
   }
 
-  async acquire(): Promise<void> {
+  /** Returns whether the screen will actually stay on. */
+  async acquire(): Promise<boolean> {
     this.wanted = true;
     await this.request();
+    return this.sentinel !== null;
   }
 
   async release(): Promise<void> {

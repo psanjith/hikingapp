@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, formatDistance, formatMapVersion } from './format';
+import { formatBytes, formatDistance, formatDuration, formatMapVersion } from './format';
 
 describe('formatBytes', () => {
   it('uses whole units under a gigabyte', () => {
@@ -37,5 +37,17 @@ describe('formatDistance', () => {
     expect(formatDistance(996)).toBe('1.0 km');
     expect(formatDistance(2_870)).toBe('2.9 km');
     expect(formatDistance(21_100)).toBe('21.1 km');
+  });
+});
+
+describe('formatDuration', () => {
+  it('shows minutes and seconds under an hour', () => {
+    expect(formatDuration(0)).toBe('0:00');
+    expect(formatDuration(42_900)).toBe('0:42');
+    expect(formatDuration(725_000)).toBe('12:05');
+  });
+
+  it('adds hours for long hikes', () => {
+    expect(formatDuration(3_731_000)).toBe('1:02:11');
   });
 });
