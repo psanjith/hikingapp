@@ -38,4 +38,6 @@ export interface LocationSource {
   subscribe(listener: LocationListener): () => void;
   /** The most recent fix, if any, so late subscribers can draw immediately. */
   readonly lastFix: LocationFix | null;
+  /** Ask for a fresh reading now, e.g. if updates seem to have stalled. */
+  restart(): void;
 }

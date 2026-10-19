@@ -46,20 +46,24 @@ export function createBrowserLocationSource(
     watchId = null;
   }
 
-  // iOS sometimes leaves a watch silently stalled after the app has been in
-  // the background. Restarting it when the app becomes visible again is cheap
-  // and makes location resume reliably.
+  // iOS sometimes leaves a watch silently stalled, e.g. after the app has been
+  // in the background. A new watch reports a fresh position straight away.
+  function restart(): void {
+    if (watchId === null) return;
+    stopWatching();
+    startWatching();
+  }
+
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && watchId !== null) {
-      stopWatching();
-      startWatching();
-    }
+    if (document.visibilityState === 'visible') restart();
   });
 
   return {
     get lastFix() {
       return lastFix;
     },
+
+    restart,
 
     subscribe(listener) {
       if (!geolocation) {

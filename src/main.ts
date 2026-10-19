@@ -2,8 +2,9 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './styles.css';
 
 import type { VectorTileSource } from 'maplibre-gl';
-import { DEFAULT_VIEW, STALE_FIX_MS } from './config';
+import { DEFAULT_VIEW, GPS_RECHECK_AFTER_MS, STALE_FIX_MS } from './config';
 import { createBrowserLocationSource } from './location/browserLocationSource';
+import { FixWatchdog } from './location/fixWatchdog';
 import type { LocationFix } from './location/types';
 import { createMap } from './map/createMap';
 import { FollowUser } from './map/followUser';
@@ -111,15 +112,26 @@ map.addControl(
 recenter.setActive(follow.isFollowing);
 follow.onChange((following) => recenter.setActive(following));
 
-let lastFixReceivedAt = 0;
-let isStale = false;
+// If readings stop arriving, first ask for a fresh one; only if that fails too,
+// grey out the dot so nobody trusts a position that might be minutes old.
+const watchdog = new FixWatchdog({
+  recheckAfterMs: GPS_RECHECK_AFTER_MS,
+  staleAfterMs: STALE_FIX_MS,
+  onRecheck: () => location.restart(),
+  onStale() {
+    const fix = location.lastFix;
+    if (!fix) return;
+    userLocation.update(fix, true);
+    gpsStatus.showFix(fix, true);
+  },
+});
+setInterval(() => watchdog.tick(Date.now()), 5_000);
 
 location.subscribe({
   onFix(fix: LocationFix) {
     // Use our own clock for staleness rather than fix.timestamp, which comes
     // from the device's GPS stack and isn't always in sync with Date.now().
-    lastFixReceivedAt = Date.now();
-    isStale = false;
+    watchdog.fixReceived(Date.now());
     userLocation.update(fix);
     gpsStatus.showFix(fix, false);
     follow.handleFix(fix);
@@ -128,18 +140,6 @@ location.subscribe({
     gpsStatus.showError(kind);
   },
 });
-
-// If readings stop arriving (GPS lost, or the browser paused it), grey out the
-// dot so nobody trusts a position that might be minutes old.
-setInterval(() => {
-  const fix = location.lastFix;
-  if (!fix || isStale) return;
-  if (Date.now() - lastFixReceivedAt > STALE_FIX_MS) {
-    isStale = true;
-    userLocation.update(fix, true);
-    gpsStatus.showFix(fix, true);
-  }
-}, 5_000);
 
 // Remember the last position when the app is closed or backgrounded.
 document.addEventListener('visibilitychange', () => {
