@@ -65,6 +65,7 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - **First open requires internet** to load the app and download a map region (ideally at home on Wi-Fi).
 - **iPhone caveat:** Safari can evict data for websites not visited recently; home-screen-installed apps are treated as more persistent. The app should **prompt users to Add to Home Screen**. Consider requesting persistent storage (`navigator.storage.persist()`).
 - Clearing browser data wipes maps/hikes → the **GPX export** button is the safety net.
+- **Safari Private Browsing has no OPFS** (`getDirectory()` throws `UnknownError`), so maps can't be saved there; the Maps sheet detects this and says so. Verified on iPhone (Oct 2026): installed to Home Screen, Lower Mainland downloaded, airplane mode → map + GPS (±17 m outdoors) work. Indoors in airplane mode iOS often reports "position unavailable" (no Wi-Fi/cell assistance); that's expected.
 - Show clear errors if a map download fails due to storage space.
 - Test: put a phone in **airplane mode** and confirm the app opens with map + location. (Good interview detail.)
 
