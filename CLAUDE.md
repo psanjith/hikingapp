@@ -106,6 +106,7 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - **Battery:** `BatteryWarnings` warns once each at 30/20/10% while not charging (Android). iPhone has no battery API, so every 2 h of recording a toast says to check it.
 - **"Get ready to hike" checklist** (`src/ui/readyPanel.ts`): first launch + "?" button. Install to Home Screen (Android: real install prompt via `beforeinstallprompt`; iOS: Share → Add to Home Screen steps), download a map, allow location, optional route, plus a short safety note. Browser-tab users get an install tip at most daily.
 - `navigator.storage.persist()` on launch when installed, on map download, and on hike start.
+- **Direction cone** on the blue dot (`src/device/compass.ts`): iOS `webkitCompassHeading` (needs `DeviceOrientationEvent.requestPermission()` from a tap, so it's requested on the locate button), Android `deviceorientationabsolute` (heading = 360 − alpha), plus screen rotation; smoothed the short way round north. Without a compass it shows GPS direction of travel, only while moving (≥ 0.7 m/s). Hidden when the position is stale.
 
 **Future-proofing for a native app:**
 - Later we'll wrap the same code with **Capacitor** to make real Android/iOS apps (which fixes background recording).

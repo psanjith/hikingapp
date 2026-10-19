@@ -7,9 +7,11 @@ import {
   BATTERY_REMINDER_MS,
   DEFAULT_VIEW,
   GPS_RECHECK_AFTER_MS,
+  MIN_TRAVEL_HEADING_SPEED,
   STALE_FIX_MS,
 } from './config';
 import { watchBattery } from './device/battery';
+import { Compass } from './device/compass';
 import { InstallPrompt, isInstalled, requestPersistentStorage } from './device/install';
 import { ScreenWakeLock } from './device/wakeLock';
 import { HikeHistory } from './history/hikeHistory';
@@ -92,6 +94,8 @@ void routes.init();
 const location = createBrowserLocationSource();
 const userLocation = new UserLocationLayer(map);
 const follow = new FollowUser(map);
+const compass = new Compass();
+compass.start((heading) => userLocation.setHeading(heading));
 
 const routesPanel = new RoutesPanel(requireElement<HTMLDialogElement>('routes-panel'), routes, offlineMaps, {
   focus(route) {
@@ -114,7 +118,12 @@ const recenter = new MapButtonControl({
   label: 'Centre map on my location',
   icon: LOCATE_ICON,
   className: 'locate-btn',
-  onClick: () => follow.recenter(location.lastFix),
+  onClick() {
+    // iPhones only show the compass permission prompt in response to a tap,
+    // and "centre on me" is when someone wants to know which way they face.
+    if (Compass.needsPermission && !compass.isWorking) void compass.requestPermission();
+    follow.recenter(location.lastFix);
+  },
 });
 map.addControl(recenter, 'bottom-right');
 map.addControl(
@@ -212,6 +221,13 @@ location.subscribe({
     // from the device's GPS stack and isn't always in sync with Date.now().
     watchdog.fixReceived(Date.now());
     gpsDiagnostics.fix(fix, Date.now());
+    // No compass (or not allowed)? Point the cone the way you're walking
+    // instead, but only while actually moving: GPS has no idea which way a
+    // standing person faces.
+    if (!compass.isWorking) {
+      const moving = fix.heading !== null && (fix.speed ?? 0) >= MIN_TRAVEL_HEADING_SPEED;
+      userLocation.setHeading(moving ? fix.heading : null);
+    }
     userLocation.update(fix);
     gpsStatus.showFix(fix, false);
     follow.handleFix(fix);

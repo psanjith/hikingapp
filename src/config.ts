@@ -61,3 +61,6 @@ export const BATTERY_REMINDER_MS = 2 * 60 * 60 * 1000;
  * counted). Further than that, the gap may be real, so it isn't bridged.
  */
 export const LIVE_TAIL_MAX_M = 50;
+
+/** Without a compass, the cone shows direction of travel only above this speed (m/s, a slow walk). */
+export const MIN_TRAVEL_HEADING_SPEED = 0.7;
