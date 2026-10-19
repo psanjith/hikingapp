@@ -148,7 +148,7 @@ This file is the handoff from a planning conversation. Read it fully before writ
 
 ## Resume / repo goals
 
-- Professional **README**: screenshots, live link, "why I built this," list of technical decisions and tradeoffs, honest note on AI assistance.
+- **README** in the owner's own voice: plain and simple, written like a person, **no emoji, light structure** (heavy organisation "kills the vibe"). Live link, why I built it, what it does, a few notes on how it works, honest note on AI assistance. Screenshots can be added later.
 - Clean commit history; a few tests for core logic (distance calculation, jitter filter, GPX parsing/export).
 - Eventually track real usage numbers (e.g. "X friends, Y hikes, Z km logged") for the resume.
 - Highlight hard problems solved: offline maps, GPS noise filtering, crash-safe recording, no-signal operation.

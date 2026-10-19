@@ -1,44 +1,44 @@
 # Hiking App
 
-A free, beginner-friendly hiking map that keeps working when you lose cell signal.
+A free hiking map for your phone that keeps working when you lose signal.
 
-**Live app:** https://psanjith.github.io/hikingapp/
+Live: https://psanjith.github.io/hikingapp/
 
-> 🚧 Work in progress. A full write-up (screenshots, design decisions, tradeoffs) is coming as the app is built.
+I got into hiking recently, mostly around Vancouver and the North Shore, and every app that does offline maps and GPX files properly either costs money or is confusing to use. My friends weren't going to pay for one, so I made my own. The main point is safety: knowing where you are when there's no cell service.
 
-## Why
+It's a web app, not something from the App Store. You open the link, add it to your home screen, and from then on it works like a normal app.
 
-Apps with offline maps and GPX import are either paid or confusing. This one is free, simple, and focused on safety: knowing where you are when there's no signal.
+What it does right now:
 
-## Status
+- download a map of an area (Lower Mainland, Vancouver Island, or all of BC) and use it offline
+- show where you are, which way you're facing, and how accurate the GPS is
+- load a GPX file for a trail and warn you if you wander off it
+- record your hike with pause and resume, saved as you go so a crash doesn't lose it
+- keep a history of your hikes, export them as GPX, and back everything up to one file
+- a compass that also shows your coordinates, in case you ever need to tell someone where you are
 
-| Stage | Feature | Status |
-| --- | --- | --- |
-| 1 | App shell, map, live location, opens offline | ✅ |
-| 2 | Downloadable offline map regions | ✅ |
-| 3 | GPX import | ✅ |
-| 4 | Hike recording (pause/resume, distance, crash-safe autosave) | ✅ |
-| 5 | Hike history, GPX export, backup & restore | ✅ |
-| 6 | Safety polish (off-route alert, battery warning, install prompt) | ✅ |
-| 7 | Field testing | ⏳ |
+Some notes on how it works, if you're curious:
 
-## Tech
+The maps are OpenStreetMap data from Protomaps. A GitHub Action cuts the BC regions out of the planet file every month and puts them on Cloudflare R2. The app downloads them in the background, stores them on the phone (Origin Private File System), and MapLibre draws them.
 
-TypeScript · Vite · MapLibre GL JS · OpenStreetMap data via Protomaps (PMTiles) · OPFS + IndexedDB · Workbox service worker (PWA) · Vitest · GitHub Pages + Actions · Cloudflare R2
+Phone GPS is noisier than you'd think, especially under trees or indoors. Positions go through a small Kalman filter, and the recorder ignores movement smaller than the GPS error, so your distance doesn't keep climbing while you sit at the top eating lunch.
 
-## Running locally
+Phones stop GPS for web apps when the screen locks, so the app keeps the screen on while recording. Bring a power bank. A native version would fix this, and the code is set up so that should be possible later.
 
-```bash
+Your hikes are stored on your phone only. There's no account. If you care about your history, use the backup button now and then.
+
+It's still early. I'm starting to test it with friends on real hikes, so expect rough edges, and please don't make it your only way of finding your way.
+
+To run it locally:
+
+```
 npm install
-npm run dev      # HTTPS dev server, also reachable from your phone on the same Wi-Fi
+npm run dev
 npm test
-npm run build
 ```
 
-## A note on AI assistance
+The dev server uses HTTPS so you can open it on your phone over Wi-Fi, since browsers only allow GPS on HTTPS.
 
-This project is built with the help of an AI coding assistant (Claude). I direct the product and technical decisions, test on real hikes, and review the code.
+I built this with a lot of help from an AI coding assistant (Claude). I decided what to build and how it should work, tested it on my own phone, and worked through the problems that came up on real walks.
 
-## License
-
-MIT. Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
+Map data © OpenStreetMap contributors. MIT license.
