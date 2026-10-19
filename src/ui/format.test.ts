@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, formatDistance, formatDuration, formatMapVersion } from './format';
+import { compassPoint, formatBytes, formatCoordinates, formatDistance, formatDuration, formatMapVersion } from './format';
 
 describe('formatBytes', () => {
   it('uses whole units under a gigabyte', () => {
@@ -49,5 +49,27 @@ describe('formatDuration', () => {
 
   it('adds hours for long hikes', () => {
     expect(formatDuration(3_731_000)).toBe('1:02:11');
+  });
+});
+
+describe('compassPoint', () => {
+  it('names the nearest of eight directions', () => {
+    expect(compassPoint(0)).toBe('North');
+    expect(compassPoint(76)).toBe('East');
+    expect(compassPoint(200)).toBe('South');
+    expect(compassPoint(225)).toBe('South-west');
+  });
+
+  it('wraps around north', () => {
+    expect(compassPoint(350)).toBe('North');
+    expect(compassPoint(337)).toBe('North-west');
+    expect(compassPoint(360)).toBe('North');
+  });
+});
+
+describe('formatCoordinates', () => {
+  it('uses N/S and E/W instead of minus signs', () => {
+    expect(formatCoordinates(49.329612, -122.948901)).toBe('49.32961° N, 122.94890° W');
+    expect(formatCoordinates(-33.8568, 151.2153)).toBe('33.85680° S, 151.21530° E');
   });
 });

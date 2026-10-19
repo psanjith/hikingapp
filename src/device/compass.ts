@@ -50,12 +50,24 @@ type PermissionRequester = { requestPermission?: () => Promise<'granted' | 'deni
  */
 export class Compass {
   private smoothed: number | null = null;
-  private listener: ((heading: number) => void) | null = null;
+  private readonly listeners = new Set<(heading: number) => void>();
   private lastReadingAt = 0;
+
+  constructor() {
+    // Android Chrome: absolute (north-referenced) orientation has its own event.
+    window.addEventListener('deviceorientationabsolute', this.handle as EventListener);
+    // iPhone: the ordinary event, with webkitCompassHeading.
+    window.addEventListener('deviceorientation', this.handle as EventListener);
+  }
 
   /** iPhones need a one-time "Allow motion & orientation" tap before any readings arrive. */
   static get needsPermission(): boolean {
     return typeof (globalThis.DeviceOrientationEvent as PermissionRequester | undefined)?.requestPermission === 'function';
+  }
+
+  /** The latest smoothed heading, if the compass has reported one. */
+  get heading(): number | null {
+    return this.smoothed;
   }
 
   /** Whether the compass has reported anything in the last few seconds. */
@@ -74,12 +86,10 @@ export class Compass {
     }
   }
 
-  start(onHeading: (heading: number) => void): void {
-    this.listener = onHeading;
-    // Android Chrome: absolute (north-referenced) orientation has its own event.
-    window.addEventListener('deviceorientationabsolute', this.handle as EventListener);
-    // iPhone: the ordinary event, with webkitCompassHeading.
-    window.addEventListener('deviceorientation', this.handle as EventListener);
+  /** Calls `listener` with every new heading. Returns a function that stops it. */
+  subscribe(listener: (heading: number) => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
   }
 
   private handle = (event: DeviceOrientationEvent & OrientationFields): void => {
@@ -88,6 +98,6 @@ export class Compass {
     if (heading === null) return;
     this.lastReadingAt = Date.now();
     this.smoothed = blendHeading(this.smoothed, heading);
-    this.listener?.(this.smoothed);
+    for (const listener of this.listeners) listener(this.smoothed);
   };
 }

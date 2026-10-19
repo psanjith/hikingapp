@@ -32,3 +32,20 @@ export function formatDuration(ms: number): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
 }
+
+const COMPASS_POINTS = ['North', 'North-east', 'East', 'South-east', 'South', 'South-west', 'West', 'North-west'];
+
+/** 76 → "East": the nearest of the eight compass points, in plain words. */
+export function compassPoint(degrees: number): string {
+  return COMPASS_POINTS[Math.round((((degrees % 360) + 360) % 360) / 45) % 8];
+}
+
+/**
+ * "49.32961° N, 122.94890° W": the format to read out to 911 or Search and
+ * Rescue. Five decimal places is about 1 m, finer than phone GPS anyway.
+ */
+export function formatCoordinates(lat: number, lon: number): string {
+  const part = (value: number, positive: string, negative: string) =>
+    `${Math.abs(value).toFixed(5)}° ${value >= 0 ? positive : negative}`;
+  return `${part(lat, 'N', 'S')}, ${part(lon, 'E', 'W')}`;
+}

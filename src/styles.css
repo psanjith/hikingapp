@@ -306,11 +306,89 @@ body {
   margin: 10px 10px 0 0;
 }
 
-.help-btn {
+.map-btn-small {
   width: 44px;
   height: 44px;
   font-size: 20px;
   font-weight: 800;
+}
+
+/* ---- Compass ---- */
+
+.compass-dial {
+  display: block;
+  width: min(72vw, 300px);
+  height: min(72vw, 300px);
+  margin: 8px auto 0;
+}
+
+.dial-face {
+  fill: #fff;
+  stroke: #d0ccc2;
+  stroke-width: 2;
+}
+
+.dial-tick {
+  stroke: #8a8f98;
+  stroke-width: 2;
+}
+
+.dial-tick.major {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+
+.dial-letter {
+  font-size: 28px;
+  font-weight: 800;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  fill: var(--ink);
+}
+
+.dial-letter.north {
+  fill: var(--poor);
+}
+
+.dial-pointer {
+  fill: var(--poor);
+}
+
+.dial-centre {
+  fill: var(--ink);
+}
+
+.compass-reading {
+  margin: 8px 0 14px;
+  text-align: center;
+}
+
+.compass-degrees {
+  display: block;
+  font-size: 44px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.compass-direction {
+  font-size: 18px;
+  color: #444;
+}
+
+.coords-card {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.compass-coords {
+  margin: 4px 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* ---- GPS details sheet ---- */

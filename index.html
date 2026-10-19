@@ -161,6 +161,31 @@
       </div>
     </dialog>
 
+    <dialog id="compass-panel" class="sheet" aria-labelledby="compass-panel-title">
+      <div class="sheet-body">
+        <header class="sheet-header">
+          <h2 id="compass-panel-title">Compass</h2>
+          <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <svg class="compass-dial" aria-hidden="true"></svg>
+        <p class="compass-reading" aria-live="polite">
+          <span class="compass-degrees">–</span>
+          <span class="compass-direction"></span>
+        </p>
+        <p class="panel-notice compass-problem" hidden></p>
+        <button class="btn btn-primary btn-wide compass-allow" type="button" hidden>Allow compass</button>
+        <div class="coords-card">
+          <div class="card-meta">Your coordinates (for 911 or Search and Rescue)</div>
+          <div class="compass-coords"></div>
+          <button class="btn btn-secondary coords-copy" type="button">Copy</button>
+        </div>
+        <p class="sheet-tip">
+          Hold the phone flat, away from metal, magnets and cars. Points to magnetic north, like a
+          real compass. If it seems wrong, move the phone in a figure-8 to recalibrate.
+        </p>
+      </div>
+    </dialog>
+
     <dialog id="gps-panel" class="sheet" aria-labelledby="gps-panel-title">
       <div class="sheet-body">
         <header class="sheet-header">

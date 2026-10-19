@@ -72,3 +72,10 @@ export const HIKES_ICON = `
 <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
   <path d="M4 5h2v2H4V5Zm4 0h12v2H8V5Zm-4 6h2v2H4v-2Zm4 0h12v2H8v-2Zm-4 6h2v2H4v-2Zm4 0h12v2H8v-2Z" fill="currentColor"/>
 </svg>`;
+
+export const COMPASS_ICON = `
+<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+  <path d="M12 4.5 15 12h-6l3-7.5Z" fill="#c62828"/>
+  <path d="M12 19.5 9 12h6l-3 7.5Z" fill="currentColor"/>
+</svg>`;

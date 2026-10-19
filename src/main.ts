@@ -44,7 +44,8 @@ import { GpsStatus } from './ui/gpsStatus';
 import { HikeBar } from './ui/hikeBar';
 import { HikeViewer } from './ui/hikeViewer';
 import { HistoryPanel } from './ui/historyPanel';
-import { HIKES_ICON, LOCATE_ICON, MAPS_ICON, MapButtonControl, ROUTES_ICON } from './ui/mapButtonControl';
+import { CompassPanel } from './ui/compassPanel';
+import { COMPASS_ICON, HIKES_ICON, LOCATE_ICON, MAPS_ICON, MapButtonControl, ROUTES_ICON } from './ui/mapButtonControl';
 import { MapsPanel } from './ui/mapsPanel';
 import { ReadyPanel } from './ui/readyPanel';
 import { RouteAlert } from './ui/routeAlert';
@@ -95,7 +96,7 @@ const location = createBrowserLocationSource();
 const userLocation = new UserLocationLayer(map);
 const follow = new FollowUser(map);
 const compass = new Compass();
-compass.start((heading) => userLocation.setHeading(heading));
+compass.subscribe((heading) => userLocation.setHeading(heading));
 
 const routesPanel = new RoutesPanel(requireElement<HTMLDialogElement>('routes-panel'), routes, offlineMaps, {
   focus(route) {
@@ -419,8 +420,23 @@ map.addControl(
   new MapButtonControl({
     label: 'Get ready to hike (help)',
     icon: '?',
-    className: 'help-btn',
+    className: 'map-btn-small',
     onClick: () => readyPanel.open(),
+  }),
+  'top-right',
+);
+
+const compassPanel = new CompassPanel(requireElement<HTMLDialogElement>('compass-panel'), compass, location);
+map.addControl(
+  new MapButtonControl({
+    label: 'Compass',
+    icon: COMPASS_ICON,
+    className: 'map-btn-small',
+    onClick() {
+      // Ask straight from the tap (an iOS rule); it's instant if already allowed.
+      if (Compass.needsPermission && !compass.isWorking) void compass.requestPermission();
+      compassPanel.open();
+    },
   }),
   'top-right',
 );
