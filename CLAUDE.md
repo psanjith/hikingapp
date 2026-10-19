@@ -114,7 +114,7 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - **Compass screen** (`src/ui/compassPanel.ts`, compass button under "?"): turning SVG dial, degrees + plain-word direction, magnetic north like a real compass, and the hiker's coordinates (`49.32961° N, 122.94890° W`) with Copy, for 911/SAR. The owner's vision is for the app to be a **hiker's toolkit** with everything they need.
 
 **Sharing (added after Stage 6, at the owner's request):**
-- Recorded hikes are largely for **showing off on social media**. "Share image" (past-hike card, and the "Hike saved" toast) renders a **transparent 1080 px-wide PNG** of the route shape + optional distance/time (`src/share/shareImage.ts`, canvas), white or black with a contrasting soft shadow so it reads on any photo. **Copy for Instagram story** (async Clipboard API, paste as a sticker) or **Save image** (share sheet). Route fitting shared with list thumbnails (`src/map/fitTrack.ts`).
+- Recorded hikes are largely for **showing off on social media**. "Share image" (past-hike card, and the "Hike saved" toast) renders a **transparent 1080 px-wide PNG** of the route shape + optional distance/time (`src/share/shareImage.ts`, canvas), white or black with a contrasting soft shadow so it reads on any photo. **Copy image** (async Clipboard API, paste as a sticker) or **Save image** (share sheet). Route fitting shared with list thumbnails (`src/map/fitTrack.ts`).
 
 **Future-proofing for a native app:**
 - Later we'll wrap the same code with **Capacitor** to make real Android/iOS apps (which fixes background recording).
