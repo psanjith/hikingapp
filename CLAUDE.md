@@ -101,6 +101,12 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - Each finished hike stores a ~60-point `preview` for list thumbnails (SVG, no map tiles); older hikes get one lazily.
 - Viewing a past hike draws it in pink on the main map with a bottom card (Export / Rename / Delete). New hikes are named "Morning/Afternoon/Evening hike".
 
+**Safety polish (Stage 6):**
+- **Off-route alert** (`src/routes/offRoute.ts`, pure + tested): distance to the active route via point-to-segment on a local flat projection. `OffRouteMonitor` arms only after the hiker has been within 30 m (no alerts at home), subtracts GPS accuracy, needs > 50 m for 15 s to alert, and < 30 m to clear (hysteresis). Banner with live distance + "Show me" (frames you and the nearest route point); vibrates on Android (iOS can't).
+- **Battery:** `BatteryWarnings` warns once each at 30/20/10% while not charging (Android). iPhone has no battery API, so every 2 h of recording a toast says to check it.
+- **"Get ready to hike" checklist** (`src/ui/readyPanel.ts`): first launch + "?" button. Install to Home Screen (Android: real install prompt via `beforeinstallprompt`; iOS: Share → Add to Home Screen steps), download a map, allow location, optional route, plus a short safety note. Browser-tab users get an install tip at most daily.
+- `navigator.storage.persist()` on launch when installed, on map download, and on hike start.
+
 **Future-proofing for a native app:**
 - Later we'll wrap the same code with **Capacitor** to make real Android/iOS apps (which fixes background recording).
 - **Isolate GPS tracking and file/storage access behind clean interfaces/modules** so they can be swapped for native plugins later without rewriting the app.

@@ -44,3 +44,13 @@ export const RECORD_GAP_M = 100;
 
 /** If the app is hidden this long while recording, explain the possible gap in the track. */
 export const BACKGROUND_WARNING_MS = 30_000;
+
+/** Off-route alert: further than this from the imported route (after allowing for GPS error) counts as off. */
+export const OFF_ROUTE_M = 50;
+/** Off-route alert: back within this distance counts as back on the route. */
+export const BACK_ON_ROUTE_M = 30;
+/** Off-route alert: must stay off this long before alerting, so one bad reading never triggers it. */
+export const OFF_ROUTE_CONFIRM_MS = 15_000;
+
+/** Where the phone can't report its battery (iPhone), remind hikers to check it this often while recording. */
+export const BATTERY_REMINDER_MS = 2 * 60 * 60 * 1000;

@@ -2,28 +2,38 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './styles.css';
 
 import type { VectorTileSource } from 'maplibre-gl';
-import { BACKGROUND_WARNING_MS, DEFAULT_VIEW, GPS_RECHECK_AFTER_MS, STALE_FIX_MS } from './config';
+import {
+  BACKGROUND_WARNING_MS,
+  BATTERY_REMINDER_MS,
+  DEFAULT_VIEW,
+  GPS_RECHECK_AFTER_MS,
+  STALE_FIX_MS,
+} from './config';
 import { watchBattery } from './device/battery';
+import { InstallPrompt, isInstalled, requestPersistentStorage } from './device/install';
 import { ScreenWakeLock } from './device/wakeLock';
+import { HikeHistory } from './history/hikeHistory';
 import { createBrowserLocationSource } from './location/browserLocationSource';
 import { FixWatchdog } from './location/fixWatchdog';
 import { GpsDiagnostics } from './location/gpsDiagnostics';
 import type { LocationFix } from './location/types';
 import { createMap } from './map/createMap';
+import { fitMapTo } from './map/fitBounds';
+import { boundsOfPoints } from './map/geo';
 import { FollowUser } from './map/followUser';
 import { RouteLayer } from './map/routeLayer';
-import { fitMapTo } from './map/fitBounds';
 import { TrackLayer } from './map/trackLayer';
 import { UserLocationLayer } from './map/userLocationLayer';
 import { createOpfsMapFileStore } from './maps/mapFileStore';
 import { OfflineMaps } from './maps/offlineMaps';
 import { tileUrl } from './maps/style';
-import { HikeHistory } from './history/hikeHistory';
 import { TileRouter } from './maps/tileRouter';
 import { createIndexedDbHikeStore } from './recording/hikeStore';
 import { Recorder } from './recording/recorder';
+import { distanceToRoute, OffRouteMonitor } from './routes/offRoute';
 import { createIndexedDbRouteStore } from './routes/routeStore';
 import { Routes } from './routes/routes';
+import { BatteryWarnings } from './safety/batteryWarnings';
 import { loadLastView, saveLastPosition } from './storage/lastPosition';
 import { watchConnectivity } from './ui/connectivity';
 import { formatDistance, formatDuration } from './ui/format';
@@ -32,8 +42,10 @@ import { GpsStatus } from './ui/gpsStatus';
 import { HikeBar } from './ui/hikeBar';
 import { HikeViewer } from './ui/hikeViewer';
 import { HistoryPanel } from './ui/historyPanel';
-import { MapsPanel } from './ui/mapsPanel';
 import { HIKES_ICON, LOCATE_ICON, MAPS_ICON, MapButtonControl, ROUTES_ICON } from './ui/mapButtonControl';
+import { MapsPanel } from './ui/mapsPanel';
+import { ReadyPanel } from './ui/readyPanel';
+import { RouteAlert } from './ui/routeAlert';
 import { RoutesPanel } from './ui/routesPanel';
 import { registerServiceWorker } from './ui/serviceWorker';
 import { showToast } from './ui/toast';
@@ -61,16 +73,7 @@ const offlineMaps = new OfflineMaps(createOpfsMapFileStore(), tileRouter, refres
 const mapsPanel = new MapsPanel(requireElement<HTMLDialogElement>('maps-panel'), offlineMaps);
 window.addEventListener('online', refreshTiles);
 
-void offlineMaps.init().then(() => {
-  refreshTiles();
-  if (!offlineMaps.hasDownloadedRegions) {
-    showToast('No offline map yet. Download one before your hike, in case you lose signal.', {
-      actionLabel: 'Maps',
-      onAction: () => mapsPanel.open(),
-      durationMs: 15_000,
-    });
-  }
-});
+const mapsReady = offlineMaps.init().then(refreshTiles);
 
 // --- Imported GPX routes ---------------------------------------------------------
 
@@ -96,6 +99,11 @@ const routesPanel = new RoutesPanel(requireElement<HTMLDialogElement>('routes-pa
     routeLayer.fitTo(route);
   },
   openMaps: () => mapsPanel.open(),
+});
+const installPrompt = new InstallPrompt();
+const readyPanel = new ReadyPanel(requireElement<HTMLDialogElement>('ready-panel'), offlineMaps, installPrompt, {
+  openMaps: () => mapsPanel.open(),
+  openRoutes: () => routesPanel.open(),
 });
 const gpsStatus = new GpsStatus(requireElement('gps-chip'), requireElement('gps-banner'));
 const gpsDiagnostics = new GpsDiagnostics();
@@ -158,6 +166,46 @@ const watchdog = new FixWatchdog({
 });
 setInterval(() => watchdog.tick(Date.now()), 5_000);
 
+// --- Off-route alert ----------------------------------------------------------------
+
+const offRoute = new OffRouteMonitor();
+let lastRouteCheck: { position: [number, number]; nearest: [number, number] } | null = null;
+const routeAlert = new RouteAlert(requireElement('route-banner'), () => {
+  // "Show me": zoom out until both you and the nearest point of the route are on screen.
+  if (!lastRouteCheck) return;
+  const bounds = boundsOfPoints([lastRouteCheck.position, lastRouteCheck.nearest]);
+  if (!bounds) return;
+  follow.stop();
+  fitMapTo(map, bounds);
+});
+
+// Start fresh whenever a different route is shown (or it's hidden).
+let monitoredRouteId: string | null = null;
+routes.subscribe(() => {
+  const id = routes.active?.id ?? null;
+  if (id === monitoredRouteId) return;
+  monitoredRouteId = id;
+  offRoute.reset();
+  routeAlert.hide();
+});
+
+function checkRoute(fix: LocationFix): void {
+  const route = routes.active;
+  const result = route && distanceToRoute([fix.lon, fix.lat], route.lines);
+  if (!result) return;
+  lastRouteCheck = { position: [fix.lon, fix.lat], nearest: result.nearest };
+
+  const event = offRoute.update(result.meters, fix.accuracy, Date.now());
+  if (event === 'went-off') {
+    routeAlert.alert(result.meters);
+  } else if (event === 'back-on') {
+    routeAlert.hide();
+    showToast('Back on your route.', { durationMs: 4_000 });
+  } else if (offRoute.isOff) {
+    routeAlert.update(result.meters);
+  }
+}
+
 location.subscribe({
   onFix(fix: LocationFix) {
     // Use our own clock for staleness rather than fix.timestamp, which comes
@@ -167,10 +215,13 @@ location.subscribe({
     userLocation.update(fix);
     gpsStatus.showFix(fix, false);
     follow.handleFix(fix);
+    readyPanel.setLocation('on');
+    checkRoute(fix);
   },
   onError(kind) {
     gpsDiagnostics.error(kind, Date.now());
     gpsStatus.showError(kind);
+    if (kind === 'permission-denied') readyPanel.setLocation('off');
   },
 });
 
@@ -210,6 +261,8 @@ async function startHike(): Promise<void> {
     return;
   }
   follow.recenter(location.lastFix);
+  // A hike in progress is exactly what we don't want the browser to clear.
+  void requestPersistentStorage();
   const screenStaysOn = await recordingWakeLock.acquire();
   showToast(
     screenStaysOn
@@ -276,7 +329,39 @@ recorder.onSaveError(() => {
   });
 });
 
-void watchBattery((status) => hikeBar.setBattery(status));
+// --- Battery ------------------------------------------------------------------------
+
+const batteryWarnings = new BatteryWarnings();
+let batteryKnown = false;
+void watchBattery((status) => {
+  hikeBar.setBattery(status);
+  const level = batteryWarnings.check(status);
+  if (level === null) return;
+  const advice =
+    recorder.state === 'recording'
+      ? 'Recording with the screen on uses a lot of power. Plug in a power bank, or think about turning back.'
+      : 'Charge it before you head out.';
+  showToast(`Battery at ${Math.round(status.level * 100)}%. ${advice}`, { durationMs: 15_000 });
+}).then((supported) => {
+  batteryKnown = supported;
+});
+
+// iPhones don't tell websites the battery level, so remind hikers to look
+// themselves every couple of hours of recording.
+let batteryRemindersGiven = 0;
+recorder.subscribe(() => {
+  if (recorder.state === 'idle') batteryRemindersGiven = 0;
+});
+setInterval(() => {
+  if (batteryKnown || recorder.state !== 'recording') return;
+  const due = Math.floor(recorder.elapsedMs() / BATTERY_REMINDER_MS);
+  if (due <= batteryRemindersGiven) return;
+  batteryRemindersGiven = due;
+  showToast(
+    `You've been recording for ${Math.round((due * BATTERY_REMINDER_MS) / 3_600_000)} hours. Check your battery: GPS with the screen on uses a lot of power.`,
+    { durationMs: 15_000 },
+  );
+}, 60_000);
 
 const gpsDetails = new GpsDetailsPanel(requireElement<HTMLDialogElement>('gps-panel'), gpsDiagnostics, recorder);
 requireElement('gps-chip').addEventListener('click', () => gpsDetails.open());
@@ -307,6 +392,39 @@ document.addEventListener('visibilitychange', () => {
 document.addEventListener('visibilitychange', () => {
   const fix = location.lastFix;
   if (document.visibilityState === 'hidden' && fix) saveLastPosition(fix.lon, fix.lat);
+});
+
+// --- First launch and reminders --------------------------------------------------------
+
+map.addControl(
+  new MapButtonControl({
+    label: 'Get ready to hike (help)',
+    icon: '?',
+    className: 'help-btn',
+    onClick: () => readyPanel.open(),
+  }),
+  'top-right',
+);
+
+// Installed (Home Screen) apps can ask for persistent storage without a prompt.
+if (isInstalled()) void requestPersistentStorage();
+
+void mapsReady.then(() => {
+  if (ReadyPanel.isFirstRun) {
+    readyPanel.open();
+  } else if (!offlineMaps.hasDownloadedRegions) {
+    showToast('No offline map yet. Download one before your hike, in case you lose signal.', {
+      actionLabel: 'Maps',
+      onAction: () => mapsPanel.open(),
+      durationMs: 15_000,
+    });
+  } else if (!isInstalled() && ReadyPanel.installTipDue()) {
+    showToast('Tip: add this app to your Home Screen so your phone keeps your maps and hikes.', {
+      actionLabel: 'How',
+      onAction: () => readyPanel.open(),
+      durationMs: 12_000,
+    });
+  }
 });
 
 // --- App shell -------------------------------------------------------------------

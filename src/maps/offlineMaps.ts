@@ -58,6 +58,10 @@ export class OfflineMaps {
     return this.stored.size > 0;
   }
 
+  get downloadedRegionNames(): string[] {
+    return [...this.stored.values()].map((r) => r.name);
+  }
+
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);

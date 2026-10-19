@@ -110,6 +110,20 @@ body {
   user-select: text;
 }
 
+/* Purple, matching the imported route on the map. */
+.route-banner {
+  border-left-color: #7b2cbf;
+}
+
+.route-banner p {
+  margin: 0 0 10px;
+}
+
+.banner-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* ---- MapLibre controls: keep clear of the notch and home bar ---- */
 
 .maplibregl-ctrl-top-right {
@@ -247,6 +261,56 @@ body {
 /* While a past hike is open, it replaces the Start button. */
 .hike-view:not([hidden]) ~ .start-hike {
   display: none;
+}
+
+/* ---- Get ready checklist ---- */
+
+.ready-step {
+  display: flex;
+  gap: 12px;
+}
+
+.ready-badge {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #e8e4da;
+  font-weight: 800;
+}
+
+.ready-step.is-done .ready-badge {
+  background: var(--good);
+  color: #fff;
+}
+
+.ready-body p {
+  margin: 4px 0 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #444;
+}
+
+.safety-note {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #e8f0e3;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.maplibregl-ctrl-top-right .map-btn-ctrl {
+  margin: 10px 10px 0 0;
+}
+
+.help-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  font-weight: 800;
 }
 
 /* ---- GPS details sheet ---- */

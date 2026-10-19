@@ -32,6 +32,13 @@
         <span id="offline-chip" class="chip" data-tone="off" hidden>Offline · GPS still works</span>
       </div>
       <p id="gps-banner" class="banner" role="alert" hidden></p>
+      <div id="route-banner" class="banner route-banner" role="alert" hidden>
+        <p class="route-banner-text"></p>
+        <div class="banner-actions">
+          <button class="btn btn-primary route-show" type="button">Show me</button>
+          <button class="btn btn-secondary route-dismiss" type="button">OK</button>
+        </div>
+      </div>
     </div>
 
     <div id="hike-dock" class="hike-dock">
@@ -131,6 +138,26 @@
         <div class="backup-card"></div>
         <input id="restore-file" class="restore-file" type="file" hidden />
         <ul class="card-list"></ul>
+      </div>
+    </dialog>
+
+    <dialog id="ready-panel" class="sheet" aria-labelledby="ready-panel-title">
+      <div class="sheet-body">
+        <header class="sheet-header">
+          <h2 id="ready-panel-title">Get ready to hike</h2>
+          <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <p class="sheet-intro">
+          This app shows where you are on a map, even with <strong>no cell signal</strong>. Set it up at
+          home, on Wi-Fi:
+        </p>
+        <ol class="card-list ready-steps"></ol>
+        <div class="safety-note">
+          <strong>A phone is a helper, not a plan.</strong> Tell someone where you're going and when
+          you'll be back. Bring water, warm layers, a headlamp and a power bank. Turn back if the
+          weather, the trail or the daylight isn't on your side. In an emergency, call 911.
+        </div>
+        <button class="btn btn-primary btn-wide ready-done" type="button">Got it</button>
       </div>
     </dialog>
 
