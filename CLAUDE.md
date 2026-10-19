@@ -20,6 +20,7 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - **After each stage, explain in plain English**: what the code does, the general idea, how you executed it, and *why* you made each key choice. I need to be able to talk confidently about this project in interviews, including questions like "walk me through how recording works," "why did you store hikes that way," or "what happens if GPS drops out."
 - Point out anything that's a good "interview talking point" (real engineering problems and tradeoffs).
 - I'll be upfront that the project was built with AI assistance, so keep the code clean and well-organized — it should look professional to anyone browsing the repo.
+- **Commit messages: no `Co-Authored-By: Claude` (or any AI attribution) lines.** The AI assistance is disclosed in the README; interviewers expect it anyway.
 - Be honest with me about limitations and tradeoffs rather than overselling.
 
 ---
