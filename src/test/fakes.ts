@@ -28,6 +28,7 @@ export class FakeLocation implements LocationSource {
       speed: null,
       timestamp: seconds * 1000,
     };
+    this.lastFix = fix;
     for (const l of this.listeners) l.onFix(fix);
   }
 }

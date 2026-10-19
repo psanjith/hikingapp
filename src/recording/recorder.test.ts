@@ -129,4 +129,24 @@ describe('Recorder', () => {
     expect(store.hikes.size).toBe(0);
     expect(store.pointList).toHaveLength(0);
   });
+
+  it('draws the line on to the live position, without saving or counting it', async () => {
+    await recorder.start('Test hike');
+    gps.emit(0, 0);
+    gps.emit(3, 5); // Too small to save...
+    const display = recorder.displayTrack(gps.lastFix);
+    expect(display[0]).toHaveLength(2); // ...but drawn, so the line reaches the dot.
+    expect(recorder.track[0]).toHaveLength(1);
+    expect(recorder.current!.distanceMeters).toBe(0);
+  });
+
+  it('does not draw the line to a reading too inaccurate to trust, or while paused', async () => {
+    await recorder.start('Test hike');
+    gps.emit(0, 0);
+    gps.emit(30, 10, 80); // ±80 m: skipped, and not drawn either.
+    expect(recorder.displayTrack(gps.lastFix)).toBe(recorder.track);
+    recorder.pause();
+    gps.emit(410, 310);
+    expect(recorder.displayTrack(gps.lastFix)).toBe(recorder.track);
+  });
 });

@@ -54,3 +54,10 @@ export const OFF_ROUTE_CONFIRM_MS = 15_000;
 
 /** Where the phone can't report its battery (iPhone), remind hikers to check it this often while recording. */
 export const BATTERY_REMINDER_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * Recording: the line on the map is drawn on to the live position if it's
+ * within this distance of the last saved point (display only; not saved or
+ * counted). Further than that, the gap may be real, so it isn't bridged.
+ */
+export const LIVE_TAIL_MAX_M = 50;

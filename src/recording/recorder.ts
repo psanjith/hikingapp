@@ -1,5 +1,6 @@
 import type { LocationFix, LocationSource } from '../location/types';
-import type { LonLat } from '../map/geo';
+import { LIVE_TAIL_MAX_M, RECORD_MAX_ACCURACY_M } from '../config';
+import { distanceMeters, type LonLat } from '../map/geo';
 import type { HikeStore } from './hikeStore';
 import { filterFix, type FilterDecision, type FilterPoint } from './trackFilter';
 import { groupSegments, trackPreview } from './trackPreview';
@@ -61,6 +62,22 @@ export class Recorder {
   /** The recorded track so far, one line per segment. */
   get track(): readonly LonLat[][] {
     return this.lines;
+  }
+
+  /**
+   * The track as it should be drawn right now: the saved points, plus a "live
+   * tail" from the last saved point to the latest GPS reading.
+   *
+   * Small movements aren't saved until they're clearly more than GPS wobble,
+   * so without the tail the line lags several metres behind the blue dot and
+   * looks broken. The tail is display only: it isn't saved or counted.
+   */
+  displayTrack(latest: LocationFix | null): readonly LonLat[][] {
+    const last = this.lastKept;
+    if (this.state !== 'recording' || !latest || !last || latest.accuracy > RECORD_MAX_ACCURACY_M) return this.lines;
+    const here: LonLat = [latest.lon, latest.lat];
+    if (distanceMeters([last.lon, last.lat], here) > LIVE_TAIL_MAX_M) return this.lines; // Don't bridge a real gap.
+    return [...this.lines.slice(0, -1), [...this.lines[this.lines.length - 1], here]];
   }
 
   /** Whether the current segment is still waiting for its first good GPS reading. */

@@ -235,7 +235,10 @@ const hikeBar = new HikeBar(requireElement('hike-dock'), recorder, {
   finish: () => void finishHike(),
 });
 
-recorder.subscribe(() => trackLayer.show(recorder.track));
+const drawTrack = () => trackLayer.show(recorder.displayTrack(location.lastFix));
+recorder.subscribe(drawTrack);
+// Every GPS reading, not just saved points, so the line keeps up with the blue dot.
+location.subscribe({ onFix: drawTrack });
 
 // Keep the screen on only while actually recording: browsers stop GPS when the
 // screen locks. While paused, the phone may sleep and save battery.
