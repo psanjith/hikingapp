@@ -1,12 +1,14 @@
 /** App-wide constants, kept in one place so they're easy to find and change. */
 
 /**
- * Where offline map regions and their catalog.json are hosted (Cloudflare R2).
+ * Where offline map regions and their catalog.json are hosted (Cloudflare R2,
+ * bucket "hikingapp-maps"). The r2.dev address is rate-limited by Cloudflare;
+ * move to a custom domain before usage grows beyond the club.
  * Override locally with VITE_MAPS_BASE_URL in .env.local, e.g. to test with
  * regions built into public/dev-maps by scripts/build-maps.mjs.
  */
 export const MAPS_BASE_URL: string =
-  import.meta.env.VITE_MAPS_BASE_URL ?? 'https://maps.example.invalid/';
+  import.meta.env.VITE_MAPS_BASE_URL ?? 'https://pub-dc567a3941614600bd02295e927d8c6e.r2.dev/';
 
 /** Map data has full detail up to this zoom; MapLibre enlarges it beyond. */
 export const MAP_DATA_MAXZOOM = 14;
