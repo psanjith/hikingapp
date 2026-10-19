@@ -172,6 +172,83 @@ body {
   color: #fff;
 }
 
+/* ---- My hikes ---- */
+
+.backup-card {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.backup-card.needs-backup {
+  background: #fff3cd;
+}
+
+.backup-card p {
+  margin: 0;
+}
+
+.hike-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.hike-row-text {
+  min-width: 0;
+}
+
+.track-thumb {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: #e8f0e3;
+}
+
+.track-thumb polyline {
+  fill: none;
+  stroke: #c2185b;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hike-view {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 12px 14px 14px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.3);
+  border-top: 5px solid #c2185b;
+}
+
+.hike-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.hike-view .panel-close {
+  margin: -8px -8px 0 0;
+}
+
+.hike-view .card-actions .btn {
+  flex: 1;
+  padding: 0 8px;
+}
+
+/* While a past hike is open, it replaces the Start button. */
+.hike-view:not([hidden]) ~ .start-hike {
+  display: none;
+}
+
 /* ---- GPS details sheet ---- */
 
 .details-list {

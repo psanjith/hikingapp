@@ -67,3 +67,8 @@ export const ROUTES_ICON = `
   <circle cx="5" cy="18.5" r="2.6" fill="currentColor"/>
   <path d="M18 2.5c-2 0-3.5 1.5-3.5 3.4 0 2.4 3.5 6 3.5 6s3.5-3.6 3.5-6c0-1.9-1.5-3.4-3.5-3.4Zm0 4.6a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z" fill="currentColor"/>
 </svg>`;
+
+export const HIKES_ICON = `
+<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+  <path d="M4 5h2v2H4V5Zm4 0h12v2H8V5Zm-4 6h2v2H4v-2Zm4 0h12v2H8v-2Zm-4 6h2v2H4v-2Zm4 0h12v2H8v-2Z" fill="currentColor"/>
+</svg>`;

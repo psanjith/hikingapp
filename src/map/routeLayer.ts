@@ -1,6 +1,7 @@
 import type * as maplibregl from 'maplibre-gl';
 import type { GeoJSONSource } from 'maplibre-gl';
 import type { SavedRoute } from '../routes/types';
+import { fitMapTo } from './fitBounds';
 
 const SOURCE_ID = 'route';
 /** The blue dot's bottom layer; the route is drawn beneath it so "you" stay on top. */
@@ -36,14 +37,7 @@ export class RouteLayer {
 
   /** Zoom out or in until the whole route is on screen, clear of the buttons. */
   fitTo(route: SavedRoute): void {
-    const [west, south, east, north] = route.bounds;
-    this.map.fitBounds(
-      [
-        [west, south],
-        [east, north],
-      ],
-      { padding: { top: 90, bottom: 110, left: 40, right: 90 }, maxZoom: 15, duration: 800 },
-    );
+    fitMapTo(this.map, route.bounds);
   }
 
   private addLayers(): void {

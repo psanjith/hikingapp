@@ -55,6 +55,15 @@ export class Routes {
     return route;
   }
 
+  /** Adds routes from a backup, skipping any already on this phone. Returns how many were added. */
+  async restore(saved: readonly SavedRoute[]): Promise<number> {
+    const missing = saved.filter((route) => !this.routes.some((r) => r.id === route.id));
+    for (const route of missing) await this.store.save(route);
+    this.routes = await this.store.list();
+    this.emit();
+    return missing.length;
+  }
+
   show(id: string): void {
     this.setActive(id);
   }

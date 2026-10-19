@@ -2,6 +2,7 @@ import type { LocationFix, LocationSource } from '../location/types';
 import type { LonLat } from '../map/geo';
 import type { HikeStore } from './hikeStore';
 import { filterFix, type FilterDecision, type FilterPoint } from './trackFilter';
+import { groupSegments, trackPreview } from './trackPreview';
 import type { Hike, HikePoint } from './types';
 
 export type RecorderState = 'idle' | 'recording' | 'paused';
@@ -99,9 +100,7 @@ export class Recorder {
     if (!hike) return null;
 
     const points = await this.store.points(hike.id);
-    this.lines = [];
-    for (const p of points) (this.lines[p.segment] ??= []).push([p.lon, p.lat]);
-    this.lines = this.lines.filter(Boolean); // In case a segment number was skipped.
+    this.lines = groupSegments(points);
     this.segment = Math.max(0, this.lines.length - 1);
     this.segmentHasPoints = points.length > 0;
     this.lastKept = null;
@@ -179,6 +178,7 @@ export class Recorder {
     hike.activeSince = null;
     hike.status = 'finished';
     hike.endedAt = this.now();
+    hike.preview = trackPreview(this.lines);
     this.unlisten();
 
     await this.writes; // Let any pending point saves land first.

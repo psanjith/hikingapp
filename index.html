@@ -35,6 +35,21 @@
     </div>
 
     <div id="hike-dock" class="hike-dock">
+      <!-- A past hike opened from "My hikes". -->
+      <section class="hike-view" aria-label="Past hike" hidden>
+        <header class="hike-view-header">
+          <div>
+            <div class="card-name view-name"></div>
+            <div class="card-meta view-meta"></div>
+          </div>
+          <button class="panel-close view-close" type="button" aria-label="Close">×</button>
+        </header>
+        <div class="card-actions">
+          <button class="btn btn-primary view-export" type="button" aria-label="Export as a GPX file">Export</button>
+          <button class="btn btn-secondary view-rename" type="button">Rename</button>
+          <button class="btn btn-secondary view-delete" type="button">Delete</button>
+        </div>
+      </section>
       <button class="start-hike" type="button">
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
           <path d="M7 4.5v15l12-7.5-12-7.5Z" fill="currentColor" />
@@ -103,6 +118,19 @@
           Many trail websites and apps let you download a route as a GPX file. On iPhone, save it to
           the Files app, then import it here.
         </p>
+      </div>
+    </dialog>
+
+    <dialog id="history-panel" class="sheet" aria-labelledby="history-panel-title">
+      <div class="sheet-body">
+        <header class="sheet-header">
+          <h2 id="history-panel-title">My hikes</h2>
+          <button class="panel-close" type="button" aria-label="Close">×</button>
+        </header>
+        <p class="sheet-intro history-totals"></p>
+        <div class="backup-card"></div>
+        <input id="restore-file" class="restore-file" type="file" hidden />
+        <ul class="card-list"></ul>
       </div>
     </dialog>
 

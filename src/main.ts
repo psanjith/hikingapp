@@ -12,11 +12,13 @@ import type { LocationFix } from './location/types';
 import { createMap } from './map/createMap';
 import { FollowUser } from './map/followUser';
 import { RouteLayer } from './map/routeLayer';
+import { fitMapTo } from './map/fitBounds';
 import { TrackLayer } from './map/trackLayer';
 import { UserLocationLayer } from './map/userLocationLayer';
 import { createOpfsMapFileStore } from './maps/mapFileStore';
 import { OfflineMaps } from './maps/offlineMaps';
 import { tileUrl } from './maps/style';
+import { HikeHistory } from './history/hikeHistory';
 import { TileRouter } from './maps/tileRouter';
 import { createIndexedDbHikeStore } from './recording/hikeStore';
 import { Recorder } from './recording/recorder';
@@ -28,8 +30,10 @@ import { formatDistance, formatDuration } from './ui/format';
 import { GpsDetailsPanel } from './ui/gpsDetailsPanel';
 import { GpsStatus } from './ui/gpsStatus';
 import { HikeBar } from './ui/hikeBar';
+import { HikeViewer } from './ui/hikeViewer';
+import { HistoryPanel } from './ui/historyPanel';
 import { MapsPanel } from './ui/mapsPanel';
-import { LOCATE_ICON, MAPS_ICON, MapButtonControl, ROUTES_ICON } from './ui/mapButtonControl';
+import { HIKES_ICON, LOCATE_ICON, MAPS_ICON, MapButtonControl, ROUTES_ICON } from './ui/mapButtonControl';
 import { RoutesPanel } from './ui/routesPanel';
 import { registerServiceWorker } from './ui/serviceWorker';
 import { showToast } from './ui/toast';
@@ -70,11 +74,13 @@ void offlineMaps.init().then(() => {
 
 // --- Imported GPX routes ---------------------------------------------------------
 
-// Map layers are created in drawing order: imported route, then the hike being
-// recorded on top of it, then (below) the blue dot on top of everything.
+// Map layers are created in drawing order: imported route, then a past hike,
+// then the hike being recorded, then (below) the blue dot on top of everything.
 const routeLayer = new RouteLayer(map);
-const trackLayer = new TrackLayer(map);
-const routes = new Routes(createIndexedDbRouteStore());
+const pastHikeLayer = new TrackLayer(map, 'past-hike', '#c2185b'); // Pink: a hike from history.
+const trackLayer = new TrackLayer(map, 'recorded-track', '#ef6c00'); // Orange: the hike in progress.
+const routeStore = createIndexedDbRouteStore();
+const routes = new Routes(routeStore);
 routes.subscribe(() => routeLayer.show(routes.active));
 void routes.init();
 
@@ -95,7 +101,7 @@ const gpsStatus = new GpsStatus(requireElement('gps-chip'), requireElement('gps-
 const gpsDiagnostics = new GpsDiagnostics();
 
 // Bottom-right buttons. MapLibre stacks bottom controls upwards, so the one
-// added last sits on top: locate (most used) at the bottom, then Maps, Routes.
+// added last sits on top: locate (most used) at the bottom, then Maps, Routes, Hikes.
 const recenter = new MapButtonControl({
   label: 'Centre map on my location',
   icon: LOCATE_ICON,
@@ -118,6 +124,16 @@ map.addControl(
     icon: ROUTES_ICON,
     caption: 'Routes',
     onClick: () => routesPanel.open(),
+  }),
+  'bottom-right',
+);
+map.addControl(
+  new MapButtonControl({
+    label: 'My hikes',
+    icon: HIKES_ICON,
+    caption: 'Hikes',
+    // Declared further down; only called on tap, long after startup.
+    onClick: () => historyPanel.open(),
   }),
   'bottom-right',
 );
@@ -160,7 +176,8 @@ location.subscribe({
 
 // --- Hike recording -------------------------------------------------------------
 
-const recorder = new Recorder(createIndexedDbHikeStore(), location);
+const hikeStore = createIndexedDbHikeStore();
+const recorder = new Recorder(hikeStore, location);
 const recordingWakeLock = new ScreenWakeLock();
 const hikeBar = new HikeBar(requireElement('hike-dock'), recorder, {
   start: () => void startHike(),
@@ -179,10 +196,15 @@ recorder.subscribe(() => {
   else void recordingWakeLock.release();
 });
 
+/** "Morning hike", "Afternoon hike"…: the date is shown separately, so the name needn't repeat it. */
+function defaultHikeName(start: Date): string {
+  const hour = start.getHours();
+  return hour < 12 ? 'Morning hike' : hour < 17 ? 'Afternoon hike' : 'Evening hike';
+}
+
 async function startHike(): Promise<void> {
-  const date = new Date().toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
   try {
-    await recorder.start(`Hike on ${date}`);
+    await recorder.start(defaultHikeName(new Date()));
   } catch {
     showToast("Couldn't start recording because this phone's storage isn't available.", { durationMs: 8_000 });
     return;
@@ -207,8 +229,34 @@ async function finishHike(): Promise<void> {
       : `Finish and save this hike?\n\n${summary}`;
   if (!confirm(question)) return;
   const saved = await recorder.finish();
-  showToast(saved ? `Hike saved · ${summary}` : 'Hike discarded.', { durationMs: 6_000 });
+  if (!saved) {
+    showToast('Hike discarded.', { durationMs: 4_000 });
+    return;
+  }
+  await history.refresh();
+  showToast(`Hike saved · ${summary}`, {
+    actionLabel: 'My hikes',
+    onAction: () => historyPanel.open(),
+    durationMs: 8_000,
+  });
 }
+
+// --- Hike history ----------------------------------------------------------------
+
+const history = new HikeHistory(hikeStore, routeStore, routes);
+void history.refresh();
+const hikeViewer = new HikeViewer(
+  requireElement('hike-dock').querySelector<HTMLElement>('.hike-view')!,
+  history,
+  pastHikeLayer,
+  (bounds) => {
+    follow.stop();
+    fitMapTo(map, bounds);
+  },
+);
+const historyPanel = new HistoryPanel(requireElement<HTMLDialogElement>('history-panel'), history, (hike) => {
+  void hikeViewer.show(hike);
+});
 
 // Bring back a hike that was in progress when the app was closed or crashed.
 void recorder.restore().then((hike) => {

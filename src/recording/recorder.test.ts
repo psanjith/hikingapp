@@ -1,61 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { LocationFix, LocationListener, LocationSource } from '../location/types';
-import type { HikeStore } from './hikeStore';
+import { FakeLocation, MemoryHikeStore } from '../test/fakes';
 import { Recorder } from './recorder';
-import type { Hike, HikePoint } from './types';
-
-/** A GPS we control: tests call emit() to "walk". */
-class FakeLocation implements LocationSource {
-  lastFix: LocationFix | null = null;
-  private listeners = new Set<LocationListener>();
-  subscribe(listener: LocationListener) {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-  restart() {}
-  get listening() {
-    return this.listeners.size > 0;
-  }
-  /** A fix `north` metres north of the start, at `seconds`. */
-  emit(north: number, seconds: number, accuracy = 8) {
-    const fix: LocationFix = {
-      lat: 49.37 + north / 111_195,
-      lon: -123.08,
-      accuracy,
-      altitude: null,
-      heading: null,
-      speed: null,
-      timestamp: seconds * 1000,
-    };
-    for (const l of this.listeners) l.onFix(fix);
-  }
-}
-
-/** Stores hikes in memory, like IndexedDB would (including structured cloning). */
-class MemoryHikeStore implements HikeStore {
-  hikes = new Map<string, Hike>();
-  pointList: HikePoint[] = [];
-  async create(hike: Hike) {
-    this.hikes.set(hike.id, structuredClone(hike));
-  }
-  async appendPoint(hike: Hike, point: HikePoint) {
-    this.hikes.set(hike.id, structuredClone(hike));
-    this.pointList.push(structuredClone(point));
-  }
-  async update(hike: Hike) {
-    this.hikes.set(hike.id, structuredClone(hike));
-  }
-  async findUnfinished() {
-    return [...this.hikes.values()].find((h) => h.status !== 'finished') ?? null;
-  }
-  async points(hikeId: string) {
-    return this.pointList.filter((p) => p.hikeId === hikeId).sort((a, b) => a.seq - b.seq);
-  }
-  async remove(hikeId: string) {
-    this.hikes.delete(hikeId);
-    this.pointList = this.pointList.filter((p) => p.hikeId !== hikeId);
-  }
-}
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -171,6 +116,7 @@ describe('Recorder', () => {
     gps.emit(20, 15);
     const hike = await recorder.finish();
     expect(hike).toMatchObject({ status: 'finished', pointCount: 2 });
+    expect(hike!.preview).toHaveLength(2); // Thumbnail shape for the history list.
     expect(store.hikes.get(hike!.id)?.status).toBe('finished');
     expect(recorder.state).toBe('idle');
     expect(await store.findUnfinished()).toBeNull();

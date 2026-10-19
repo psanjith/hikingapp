@@ -40,6 +40,7 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - Contour lines / terrain shading (optional extra download, adds size).
 - Strava integration (see notes below).
 - Sharing hikes with others beyond exporting GPX / images.
+- **Automatic cloud sync / accounts** (decided Oct 2026): would need logins and a server, and change the "free, no sign-up" model. For now durability comes from a one-tap backup file (see Hike history).
 - Wrapping into a real native app (Capacitor).
 
 **Beginner-friendly ideas (good differentiators — keep in mind):**
@@ -92,6 +93,13 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - **Save points to storage as they arrive**, not only at the end, so a crash or dead battery doesn't lose the hike.
 - **Known web limitation:** browsers (especially iOS Safari) can stop GPS when the screen locks or the app is backgrounded. Most reliable approach for v1: **keep the screen on during recording** (Screen Wake Lock API) and tell users to bring a power bank. Be upfront in the UI about this.
 - **How it's built (Stage 4):** `Recorder` (`src/recording/recorder.ts`) is a start → pause ⇄ resume → finish state machine that depends only on the `LocationSource` and `HikeStore` interfaces (tested with a fake GPS + in-memory store). `filterFix` (pure) keeps a fix only if accuracy ≤ 40 m and it moved ≥ clamp(accuracy/2, 5, 15) m; a >60 s silence followed by a >100 m jump starts a new segment and isn't counted. IndexedDB (DB v3): `hikes` summaries + `points` keyed `[hikeId, seq]`, each point written with the updated summary in one transaction, through a serial write queue. Resume = new segment. On launch, an unfinished hike is restored **paused** (active time counted only up to its last saved point). Wake lock only while recording; battery shown only where `navigator.getBattery` exists (not iOS). A toast explains gaps after the app was backgrounded > 30 s. Hikes with < 2 points are discarded on Finish.
+
+**Hike history & backup (Stage 5):**
+- The owner wants a lasting record of all hikes. Hikes live only on the phone (IndexedDB), so a **backup file** is the durability story: "Back up all hikes" writes one JSON file (`src/history/backup.ts`, format `hikingapp-backup` v1, points packed as `[segment, lat, lon, time, accuracy, altitude]`, includes imported routes) via the share sheet → iCloud Drive/Files. "Restore" merges it in, skipping hikes already present (idempotent). The "My hikes" sheet shows how many hikes aren't backed up yet (last backup time in localStorage).
+- Export one hike as GPX 1.1 (`src/gpx/writeGpx.ts`): one `<trkseg>` per segment, time + elevation per point; round-trip tested against our parser.
+- Files go out through `src/device/files.ts`: Web Share with files where supported (iOS), else a download. If the tap's permission lapsed while the file was prepared, a toast asks for one more tap.
+- Each finished hike stores a ~60-point `preview` for list thumbnails (SVG, no map tiles); older hikes get one lazily.
+- Viewing a past hike draws it in pink on the main map with a bottom card (Export / Rename / Delete). New hikes are named "Morning/Afternoon/Evening hike".
 
 **Future-proofing for a native app:**
 - Later we'll wrap the same code with **Capacitor** to make real Android/iOS apps (which fixes background recording).

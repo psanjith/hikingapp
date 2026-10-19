@@ -1,3 +1,5 @@
+import type { LonLat } from '../map/geo';
+
 export type HikeStatus = 'recording' | 'paused' | 'finished';
 
 /**
@@ -20,6 +22,12 @@ export interface Hike {
   activeSince: number | null;
   /** Time of the newest saved point, used to recover cleanly after a crash. */
   lastPointAt: number | null;
+  /**
+   * A few dozen points tracing the hike's shape, saved when it finishes, so the
+   * history list can draw a thumbnail without loading every GPS point.
+   * Missing on hikes recorded before this was added.
+   */
+  preview?: LonLat[];
 }
 
 /** One saved GPS reading. */

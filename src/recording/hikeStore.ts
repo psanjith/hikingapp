@@ -14,6 +14,10 @@ export interface HikeStore {
   findUnfinished(): Promise<Hike | null>;
   points(hikeId: string): Promise<HikePoint[]>;
   remove(hikeId: string): Promise<void>;
+  /** Finished hikes, newest first. */
+  listFinished(): Promise<Hike[]>;
+  /** Saves a whole hike at once (restoring a backup): all of it or none of it. */
+  importHike(hike: Hike, points: HikePoint[]): Promise<void>;
 }
 
 /** Every key for one hike's points: [id, 0] up to [id, +∞]. */
@@ -51,6 +55,17 @@ export function createIndexedDbHikeStore(): HikeStore {
 
     async points(hikeId) {
       return (await getDb()).getAll('points', pointRange(hikeId));
+    },
+
+    async listFinished() {
+      const hikes = await (await getDb()).getAll('hikes');
+      return hikes.filter((h) => h.status === 'finished').sort((a, b) => b.startedAt - a.startedAt);
+    },
+
+    async importHike(hike, points) {
+      const tx = (await getDb()).transaction(['hikes', 'points'], 'readwrite');
+      const pointStore = tx.objectStore('points');
+      await Promise.all([...points.map((p) => pointStore.put(p)), tx.objectStore('hikes').put(hike), tx.done]);
     },
 
     async remove(hikeId) {
