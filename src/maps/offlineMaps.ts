@@ -20,6 +20,7 @@ type Listener = () => void;
  */
 export class OfflineMaps {
   private catalog: Catalog | null = null;
+  private canSave = true;
   private stored = new Map<string, StoredRegion>();
   private partial = new Map<string, number>();
   private downloads = new Map<string, { receivedBytes: number; abort: AbortController }>();
@@ -35,6 +36,7 @@ export class OfflineMaps {
   ) {}
 
   async init(): Promise<void> {
+    this.canSave = await this.store.canSaveFiles();
     await this.reloadStored();
     this.catalog = await loadCatalog();
     this.configureOnlineSource();
@@ -44,6 +46,11 @@ export class OfflineMaps {
 
   get catalogAvailable(): boolean {
     return this.catalog !== null;
+  }
+
+  /** Whether this browser lets us store map files at all. */
+  get canSaveMaps(): boolean {
+    return this.canSave;
   }
 
   get hasDownloadedRegions(): boolean {
@@ -179,6 +186,8 @@ function describeError(error: unknown, info: RegionInfo): string | null {
     }
     case 'quota':
       return 'Your phone ran out of space during the download. Free up some space and try again.';
+    case 'storage':
+      return "This browser isn't letting the app save maps. If you're in a Private Browsing tab, open the app in a normal tab (or from your Home Screen) and try again.";
     case 'network':
     case 'incomplete':
       return 'The download was interrupted. Tap Resume to continue from where it stopped.';

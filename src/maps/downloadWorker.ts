@@ -10,7 +10,7 @@
  * they're backgrounded. Bytes already written stay on disk, so the next attempt
  * asks the server only for the rest (an HTTP Range request).
  */
-import type { DownloadRequest, DownloadWorkerMessage } from './downloadProtocol';
+import { classifyDownloadError, type DownloadRequest, type DownloadWorkerMessage } from './downloadProtocol';
 
 /** The parts of FileSystemSyncAccessHandle we use (not in TypeScript's DOM types). */
 interface SyncAccessHandle {
@@ -96,19 +96,8 @@ async function download({ url, fileName, expectedBytes }: DownloadRequest): Prom
     }
     post({ type: 'done', receivedBytes: offset });
   } catch (error) {
-    post({ type: 'error', ...classify(error) });
+    post({ type: 'error', ...classifyDownloadError(error) });
   } finally {
     handle?.close();
   }
-}
-
-function classify(error: unknown): Pick<
-  Extract<DownloadWorkerMessage, { type: 'error' }>,
-  'kind' | 'message'
-> {
-  const name = error instanceof DOMException ? error.name : '';
-  const message = error instanceof Error ? error.message : String(error);
-  if (name === 'QuotaExceededError') return { kind: 'quota', message };
-  if (name === 'AbortError') return { kind: 'cancelled', message };
-  return { kind: 'network', message };
 }

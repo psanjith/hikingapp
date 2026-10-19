@@ -61,10 +61,16 @@ export class MapsPanel {
   private render(): void {
     const rows = this.maps.rows();
 
-    this.notice.hidden = this.maps.catalogAvailable;
-    this.notice.textContent = navigator.onLine
-      ? "Couldn't load the list of maps. Please try again in a moment."
-      : 'Connect to the internet to see maps you can download.';
+    if (!this.maps.canSaveMaps) {
+      this.notice.hidden = false;
+      this.notice.textContent =
+        "This browser can't save maps to your phone. If you're in a Private Browsing tab, open the app in a normal tab or from your Home Screen.";
+    } else {
+      this.notice.hidden = this.maps.catalogAvailable;
+      this.notice.textContent = navigator.onLine
+        ? "Couldn't load the list of maps. Please try again in a moment."
+        : 'Connect to the internet to see maps you can download.';
+    }
 
     this.list.replaceChildren(...rows.map((row) => this.renderRow(row)));
     void this.renderStorage();

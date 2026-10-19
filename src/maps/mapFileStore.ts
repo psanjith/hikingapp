@@ -36,6 +36,8 @@ export interface StorageSummary {
  * folder instead without the map or UI code changing.
  */
 export interface MapFileStore {
+  /** False when the browser won't give us file storage (e.g. Safari Private Browsing). */
+  canSaveFiles(): Promise<boolean>;
   list(): Promise<StoredRegion[]>;
   openFile(region: StoredRegion): Promise<File>;
   /** Bytes already saved from an interrupted download of this exact version. */
@@ -93,6 +95,15 @@ export function createOpfsMapFileStore(): MapFileStore {
   }
 
   return {
+    async canSaveFiles() {
+      try {
+        await mapsDir();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+
     async list() {
       return (await getDb()).getAll('regions');
     },
