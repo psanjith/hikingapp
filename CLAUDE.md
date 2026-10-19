@@ -40,7 +40,7 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - Contour lines / terrain shading (optional extra download, adds size).
 - Strava integration (see notes below).
 - Sharing hikes with others beyond exporting GPX / images.
-- **Automatic cloud sync / accounts** (decided Oct 2026): would need logins and a server, and change the "free, no sign-up" model. For now durability comes from a one-tap backup file (see Hike history).
+- **Accounts & cloud sync → Stage 8** (decided Oct 2026, after v1 is field-tested). Until then durability comes from a one-tap backup file (see Hike history).
 - Wrapping into a real native app (Capacitor).
 
 **Beginner-friendly ideas (good differentiators — keep in mind):**
@@ -121,6 +121,7 @@ This file is the handoff from a planning conversation. Read it fully before writ
 5. **Hike history** — list of saved hikes with map + distance + date, view a past hike, export GPX.
 6. **Polish & safety** — Add-to-Home-Screen prompt, persistent storage request, off-route alert, low-battery warning, clear beginner-friendly UI.
 7. **Deploy** — GitHub Pages setup, airplane-mode testing, share link with friends. (A GitHub Actions deploy is set up from Stage 1 so every stage can be tested on a real iPhone over HTTPS.)
+8. **Accounts & sync** (after field testing) — so hikes live in your account. Plan agreed so far: **optional** sign-in (the app stays fully usable without an account); the phone stays the primary copy and syncs when online (local-first, works with no signal); log in with a **6-digit email code**, not a magic link (iOS Home Screen apps don't share storage with Safari, so a link would sign in the wrong place); provider likely Supabase or Cloudflare D1 + Workers (free at club scale); needs a privacy policy and account/data deletion, since GPS tracks reveal where people live. Write up the design (provider, data model, sync/conflicts) for the owner's sign-off before coding.
 
 ## Resume / repo goals
 
