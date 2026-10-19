@@ -134,6 +134,18 @@ This file is the handoff from a planning conversation. Read it fully before writ
 7. **Deploy** — GitHub Pages setup, airplane-mode testing, share link with friends. (A GitHub Actions deploy is set up from Stage 1 so every stage can be tested on a real iPhone over HTTPS.)
 8. **Accounts & sync** (after field testing) — so hikes live in your account. Plan agreed so far: **optional** sign-in (the app stays fully usable without an account); the phone stays the primary copy and syncs when online (local-first, works with no signal); log in with a **6-digit email code**, not a magic link (iOS Home Screen apps don't share storage with Safari, so a link would sign in the wrong place); provider likely Supabase or Cloudflare D1 + Workers (free at club scale); needs a privacy policy and account/data deletion, since GPS tracks reveal where people live. Write up the design (provider, data model, sync/conflicts) for the owner's sign-off before coding.
 
+## Future ideas (not scheduled)
+
+- **AI trip planner** (after Stage 8, which adds the server an API key needs): plain-English requests ("easy 2-hour hike near North Van with a view") answered from **real data** (OpenStreetMap trails, distance/climb, BC Parks advisories), never the model's memory; loads the route and checks offline-map coverage. Also a plain-language route briefing on GPX import (numbers computed by the app, AI only explains). Small model (e.g. Claude Haiku) with per-user limits so the free app has no runaway bill. Keep AI **out of the offline, safety-critical core** (location, recording, alerts), which must stay deterministic and testable. Prefer non-AI where exact: hike names from OSM trail lookup, time estimates via Naismith's rule.
+- **Hiker's toolkit additions** (owner's vision; deferred on 2026-10-19 in favour of real-user testing): daylight left + turnaround reminder, emergency screen (call 911, text my location), trip plan to a friend, elevation.
+
+## Where we left off (2026-10-19)
+
+- Stages 1–6 done and deployed, plus: direction cone + compass screen with coordinates, Kalman position smoothing, live tail on the recorded line, GPS stall recovery + "GPS details" screen (tap the GPS chip).
+- **Priority now: real-user testing (Stage 7), no new features.** The owner is sharing the link with friends; a draft tester message was written.
+- **Still unconfirmed on a real iPhone:** (1) GPS no longer freezing on a walk (stall-recovery fix); (2) whether the direction cone is ~16° off because phones report magnetic north while the map is true-north-up (if so, add a declination correction for the cone, not the compass screen); (3) GPX/backup export via the iOS share sheet; (4) Kalman smoothing feel indoors/outdoors.
+- `main.ts` is ~450 lines of wiring; split into setup modules before Stage 8.
+
 ## Resume / repo goals
 
 - Professional **README**: screenshots, live link, "why I built this," list of technical decisions and tradeoffs, honest note on AI assistance.
