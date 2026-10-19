@@ -83,6 +83,7 @@ This file is the handoff from a planning conversation. Read it fully before writ
 - Routes are saved in IndexedDB (`routes` store, DB v2) behind a `RouteStore` interface; one route is "active" (shown) at a time, remembered in localStorage. Only one so the map stays simple and the future off-route alert has a single trail to compare against.
 - After import the map fits the route and stops "follow me". `OfflineMaps.coverageFor(bounds)` warns if no downloaded region contains the route and suggests the smallest catalog region that does.
 - The file input has no `accept` filter on purpose: iOS greys out `.gpx` files when one is set. Contents are validated instead.
+- Verified on iPhone (Oct 2026): import from Files, route drawn and zoomed to.
 
 **Recording & distance:**
 - Save a GPS point every few seconds (lat, lon, time, accuracy).
