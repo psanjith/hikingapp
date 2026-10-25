@@ -145,6 +145,14 @@ This file is the handoff from a planning conversation. Read it fully before writ
 
 ## Future ideas (not scheduled)
 
+- **Chosen "hero" feature (2026-10-24): pace-aware turnaround alert.** Positioning: *"the hiking app that gets beginners home before dark."* Design agreed in chat:
+  - Sunset from lat/lon/date via the NOAA solar algorithm (pure, tested against published Vancouver times ±2 min); target = sunset − 30 min buffer.
+  - Return time (out-and-back v1) = active time spent getting here (pauses excluded, short stops included) × ~1.15 fatigue margin. "Turn around in" = (sunset − buffer − now) − return time. Needs ~10 min of walking before showing; until then show sunset only. Off (with a message) if starting after sunset.
+  - UI: hike-bar stat green/amber (< 60 min)/red (< 15 min); banners at 30 min, 10 min, "Time to turn around". On the way back (distance to start decreasing, with hysteresis) switch to "Back at about 5:20 pm · sunset 6:12". Pre-hike: "Sunset 6:12 pm, plan to be back by 5:42 pm"; short-daylight warning.
+  - v2: loop routes (compare continue-to-end vs go-back using the loaded route), elevation-aware pace.
+  - Errs early on steep hikes (safe direction); labelled "estimated"; web version only while the app is open.
+  - Build after initial real-user testing unless the owner says otherwise. Verify any claim like "leading cause of BC rescues" against AdventureSmart / BC SAR data before using it publicly.
+
 - **AI trip planner** (after Stage 8, which adds the server an API key needs): plain-English requests ("easy 2-hour hike near North Van with a view") answered from **real data** (OpenStreetMap trails, distance/climb, BC Parks advisories), never the model's memory; loads the route and checks offline-map coverage. Also a plain-language route briefing on GPX import (numbers computed by the app, AI only explains). Small model (e.g. Claude Haiku) with per-user limits so the free app has no runaway bill. Keep AI **out of the offline, safety-critical core** (location, recording, alerts), which must stay deterministic and testable. Prefer non-AI where exact: hike names from OSM trail lookup, time estimates via Naismith's rule.
 - **Hiker's toolkit additions** (owner's vision; deferred on 2026-10-19 in favour of real-user testing): daylight left + turnaround reminder, emergency screen (call 911, text my location), trip plan to a friend, elevation.
 
