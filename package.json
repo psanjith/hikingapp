@@ -19,6 +19,8 @@
     "pmtiles": "^4.5.0"
   },
   "devDependencies": {
+    "@turf/buffer": "^7.2.0",
+    "@turf/simplify": "^7.2.0",
     "@types/geojson": "^7946.0.16",
     "@vite-pwa/assets-generator": "^2.0.0",
     "@vitejs/plugin-basic-ssl": "^2.3.0",

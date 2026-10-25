@@ -31,7 +31,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # All of Canada is ~6 GB; extracting and uploading it takes a while.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -46,18 +47,26 @@ jobs:
       - name: Fetch currently published catalog
         run: aws s3 cp "s3://$BUCKET/catalog.json" published-catalog.json || echo '{}' > published-catalog.json
 
-      - name: Extract regions
-        env:
-          ONLY: ${{ inputs.only }}
-        run: node scripts/build-maps.mjs --out dist-maps --pmtiles ./pmtiles --merge published-catalog.json ${ONLY:+--only "$ONLY"}
-
-      - name: Upload region files
+      - name: Extract and upload regions, one at a time
+        # The runner has ~14 GB of disk, less than all regions together, so
+        # each file is uploaded and deleted before the next is extracted.
         # File names contain the build date and never change, so they can be
         # cached forever by browsers and Cloudflare's CDN.
+        env:
+          ONLY: ${{ inputs.only }}
         run: |
-          aws s3 cp dist-maps/regions "s3://$BUCKET/regions" --recursive \
-            --content-type application/octet-stream \
-            --cache-control "public, max-age=31536000, immutable"
+          ids="${ONLY:-$(jq -r '.regions[].id' maps/regions.json | paste -sd, -)}"
+          # One Protomaps build for every region in this run.
+          build=$(curl -sSf https://build-metadata.protomaps.dev/builds.json | jq -r '.[-1].key | rtrimstr(".pmtiles")')
+          cp published-catalog.json catalog-so-far.json
+          for id in ${ids//,/ }; do
+            node scripts/build-maps.mjs --out dist-maps --pmtiles ./pmtiles --only "$id" --merge catalog-so-far.json --build "$build"
+            aws s3 cp dist-maps/regions "s3://$BUCKET/regions" --recursive \
+              --content-type application/octet-stream \
+              --cache-control "public, max-age=31536000, immutable"
+            cp dist-maps/catalog.json catalog-so-far.json
+            rm -rf dist-maps/regions
+          done
 
       - name: Publish catalog
         # Uploaded last, so it never lists a file that isn't there yet.

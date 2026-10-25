@@ -12,12 +12,14 @@ export interface RegionInfo {
   url: string;
   bytes: number;
   bounds: Bounds;
+  /** Also streamed over the internet for areas the phone hasn't downloaded (whole provinces). */
+  online?: boolean;
 }
 
 export interface Catalog {
   generatedAt: string;
   maxzoom: number;
-  /** Region streamed over the network when online, for areas not downloaded. */
+  /** Older catalogs (BC only): the one region streamed when online. Newer ones flag regions with `online`. */
   onlineRegionId?: string;
   regions: RegionInfo[];
 }

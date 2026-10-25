@@ -10,7 +10,7 @@ It's a web app, not something from the App Store. You open the link, add it to y
 
 What it does right now:
 
-- download a map of an area (Lower Mainland, Vancouver Island, or all of BC) and use it offline
+- download a map of any Canadian province (plus Yukon and the NWT, and smaller areas around Vancouver) and use it offline
 - show where you are, which way you're facing, and how accurate the GPS is
 - load a GPX file for a trail and warn you if you wander off it
 - record your hike with pause and resume, saved as you go so a crash doesn't lose it
@@ -19,7 +19,7 @@ What it does right now:
 
 Some notes on how it works, if you're curious:
 
-The maps are OpenStreetMap data from Protomaps. A GitHub Action cuts the BC regions out of the planet file every month and puts them on Cloudflare R2. The app downloads them in the background, stores them on the phone (Origin Private File System), and MapLibre draws them.
+The maps are OpenStreetMap data from Protomaps. A GitHub Action cuts each province out of the planet file every month and puts them on Cloudflare R2. The app downloads them in the background, stores them on the phone (Origin Private File System), and MapLibre draws them.
 
 Phone GPS is noisier than you'd think, especially under trees or indoors. Positions go through a small Kalman filter, and the recorder ignores movement smaller than the GPS error, so your distance doesn't keep climbing while you sit at the top eating lunch.
 

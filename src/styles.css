@@ -774,6 +774,16 @@ body {
   font-weight: 700;
 }
 
+.near-tag {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+  font-size: 12px;
+  vertical-align: 2px;
+}
+
 .card-desc,
 .card-meta {
   margin-top: 4px;

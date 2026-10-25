@@ -24,8 +24,7 @@ interface Archive {
  */
 export class TileRouter {
   private local: Archive[] = [];
-  private online: PMTiles | null = null;
-  private onlineBounds: Bounds | null = null;
+  private online: Archive[] = [];
 
   constructor() {
     maplibregl.addProtocol(TILE_PROTOCOL, async (params, abortController) => {
@@ -43,9 +42,15 @@ export class TileRouter {
       .sort((a, b) => boundsArea(a.bounds) - boundsArea(b.bounds));
   }
 
-  setOnlineSource(url: string | null, bounds: Bounds | null): void {
-    this.online = url ? new PMTiles(new FetchSource(url)) : null;
-    this.onlineBounds = bounds;
+  /**
+   * Regions to stream over the internet for areas not downloaded (one per
+   * province). Each file is only opened, and its index fetched, the first
+   * time a tile in its area is needed.
+   */
+  setOnlineSources(regions: { id: string; url: string; bounds: Bounds }[]): void {
+    this.online = regions
+      .map((r) => ({ id: r.id, bounds: r.bounds, pmtiles: new PMTiles(new FetchSource(r.url)) }))
+      .sort((a, b) => boundsArea(a.bounds) - boundsArea(b.bounds));
   }
 
   get hasLocalRegions(): boolean {
@@ -62,6 +67,9 @@ export class TileRouter {
   private async getTile(z: number, x: number, y: number, signal: AbortSignal): Promise<ArrayBuffer> {
     const tile = tileBounds(z, x, y);
 
+    // Downloaded regions first: they work with no signal. A province file
+    // has no tiles outside its border (the box around it is bigger than the
+    // province), so an empty answer just moves on to the next source.
     for (const archive of this.local) {
       if (!boundsIntersect(tile, archive.bounds)) continue;
       try {
@@ -76,12 +84,17 @@ export class TileRouter {
 
     // navigator.onLine can be wrong in the "connected to Wi-Fi without
     // internet" case, but then the fetch simply fails and we return empty.
-    if (this.online && navigator.onLine && (!this.onlineBounds || boundsIntersect(tile, this.onlineBounds))) {
-      try {
-        const result = await this.online.getZxy(z, x, y, signal);
-        if (result) return result.data;
-      } catch (error) {
-        if (signal.aborted) throw error;
+    // Provinces are cut along their borders, so a tile near a border may only
+    // exist in the neighbour's file: keep trying until one has it.
+    if (navigator.onLine) {
+      for (const archive of this.online) {
+        if (!boundsIntersect(tile, archive.bounds)) continue;
+        try {
+          const result = await archive.pmtiles.getZxy(z, x, y, signal);
+          if (result) return result.data;
+        } catch (error) {
+          if (signal.aborted) throw error;
+        }
       }
     }
 

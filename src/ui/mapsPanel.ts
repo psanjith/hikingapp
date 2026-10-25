@@ -14,6 +14,8 @@ export class MapsPanel {
   constructor(
     private readonly dialog: HTMLDialogElement,
     private readonly maps: OfflineMaps,
+    /** Where the hiker is, if known, to list nearby regions first. */
+    private readonly position: () => { lon: number; lat: number } | null = () => null,
   ) {
     this.list = dialog.querySelector('.card-list')!;
     this.storage = dialog.querySelector('.storage-summary')!;
@@ -40,7 +42,8 @@ export class MapsPanel {
   }
 
   private render(): void {
-    const rows = this.maps.rows();
+    const fix = this.position();
+    const rows = this.maps.rows(fix ? [fix.lon, fix.lat] : undefined);
 
     if (!this.maps.canSaveMaps) {
       this.notice.hidden = false;
@@ -65,7 +68,12 @@ export class MapsPanel {
     const item = el(
       'li',
       { className: `card region-${row.state}` },
-      el('div', { className: 'card-name', text: name }),
+      el(
+        'div',
+        { className: 'card-name' },
+        document.createTextNode(name),
+        row.nearby ? el('span', { className: 'near-tag', text: 'Near you' }) : null,
+      ),
       description ? el('div', { className: 'card-desc', text: description }) : null,
     );
 

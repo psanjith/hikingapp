@@ -1,6 +1,5 @@
 {
   "maxzoom": 14,
-  "onlineRegionId": "british-columbia",
   "regions": [
     {
       "id": "lower-mainland",
@@ -16,9 +15,87 @@
     },
     {
       "id": "british-columbia",
-      "name": "All of British Columbia",
-      "description": "The whole province. Large download, so use Wi-Fi.",
-      "regionFile": "british-columbia.geojson"
+      "name": "British Columbia",
+      "description": "The whole province: Coast Mountains, Rockies, Okanagan and the north.",
+      "regionFile": "provinces/british-columbia.geojson",
+      "online": true
+    },
+    {
+      "id": "alberta",
+      "name": "Alberta",
+      "description": "Banff, Jasper, Kananaskis and the Rockies foothills.",
+      "regionFile": "provinces/alberta.geojson",
+      "online": true
+    },
+    {
+      "id": "saskatchewan",
+      "name": "Saskatchewan",
+      "description": "Prince Albert National Park, Cypress Hills and the boreal north.",
+      "regionFile": "provinces/saskatchewan.geojson",
+      "online": true
+    },
+    {
+      "id": "manitoba",
+      "name": "Manitoba",
+      "description": "Riding Mountain, Whiteshell and the Canadian Shield.",
+      "regionFile": "provinces/manitoba.geojson",
+      "online": true
+    },
+    {
+      "id": "ontario",
+      "name": "Ontario",
+      "description": "Algonquin, the Bruce Trail, Killarney and Lake Superior. Large download.",
+      "regionFile": "provinces/ontario.geojson",
+      "online": true
+    },
+    {
+      "id": "quebec",
+      "name": "Quebec",
+      "description": "The Laurentians, Gaspésie, Mont-Tremblant and the Charlevoix. Large download.",
+      "regionFile": "provinces/quebec.geojson",
+      "online": true
+    },
+    {
+      "id": "new-brunswick",
+      "name": "New Brunswick",
+      "description": "Fundy, the Fundy Footpath and Mount Carleton.",
+      "regionFile": "provinces/new-brunswick.geojson",
+      "online": true
+    },
+    {
+      "id": "nova-scotia",
+      "name": "Nova Scotia",
+      "description": "Cape Breton Highlands, the Cabot Trail and Kejimkujik.",
+      "regionFile": "provinces/nova-scotia.geojson",
+      "online": true
+    },
+    {
+      "id": "prince-edward-island",
+      "name": "Prince Edward Island",
+      "description": "The Island Walk, Confederation Trail and the north shore.",
+      "regionFile": "provinces/prince-edward-island.geojson",
+      "online": true
+    },
+    {
+      "id": "newfoundland-and-labrador",
+      "name": "Newfoundland and Labrador",
+      "description": "Gros Morne, the East Coast Trail and Labrador.",
+      "regionFile": "provinces/newfoundland-and-labrador.geojson",
+      "online": true
+    },
+    {
+      "id": "yukon",
+      "name": "Yukon",
+      "description": "Kluane, Tombstone and the Chilkoot Trail.",
+      "regionFile": "provinces/yukon.geojson",
+      "online": true
+    },
+    {
+      "id": "northwest-territories",
+      "name": "Northwest Territories",
+      "description": "Nahanni, Yellowknife and the Great Slave Lake area.",
+      "regionFile": "provinces/northwest-territories.geojson",
+      "online": true
     }
   ]
 }

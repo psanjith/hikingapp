@@ -79,7 +79,8 @@ function refreshTiles(): void {
 }
 
 const offlineMaps = new OfflineMaps(createOpfsMapFileStore(), tileRouter, refreshTiles);
-const mapsPanel = new MapsPanel(requireElement<HTMLDialogElement>('maps-panel'), offlineMaps);
+// The panel asks for the position only when opened, long after startup.
+const mapsPanel = new MapsPanel(requireElement<HTMLDialogElement>('maps-panel'), offlineMaps, () => location.lastFix);
 window.addEventListener('online', refreshTiles);
 
 const mapsReady = offlineMaps.init().then(refreshTiles);

@@ -13,10 +13,12 @@
  *
  * Usage:
  *   node scripts/build-maps.mjs --out dist-maps [--pmtiles ./pmtiles]
- *       [--only lower-mainland,...] [--merge existing-catalog.json]
+ *       [--only lower-mainland,...] [--merge existing-catalog.json] [--build 20261024]
  *
  * --merge keeps entries from the currently published catalog for regions not
  * rebuilt this run, so rebuilding one region doesn't hide the others.
+ * --build pins the Protomaps build (default: the latest), so regions built
+ * one at a time in a single run all come from the same day's data.
  *
  * File names include the build date, so files are never overwritten in place.
  * A phone halfway through downloading last month's file can still finish.
@@ -37,6 +39,7 @@ const { values: args } = parseArgs({
     only: { type: 'string' },
     pmtiles: { type: 'string', default: 'pmtiles' },
     merge: { type: 'string' },
+    build: { type: 'string' },
   },
 });
 
@@ -45,16 +48,14 @@ const only = args.only?.split(',');
 const regions = config.regions.filter((r) => !only || only.includes(r.id));
 const outDir = resolve(args.out);
 
-const builds = await (await fetch(BUILDS_INDEX)).json();
-const latest = builds.at(-1).key; // e.g. "20261018.pmtiles"
-const version = latest.replace('.pmtiles', '');
+const version = args.build ?? (await latestBuild()); // e.g. "20261018"
+const latest = `${version}.pmtiles`;
 console.log(`Using Protomaps build ${version}`);
 
 const catalog = {
   generatedAt: new Date().toISOString(),
   source: `Protomaps basemap ${version}, © OpenStreetMap contributors`,
   maxzoom: config.maxzoom,
-  onlineRegionId: config.onlineRegionId,
   regions: [],
 };
 
@@ -82,6 +83,9 @@ for (const region of regions) {
     url: relPath,
     bytes: statSync(outFile).size,
     bounds: region.bbox ?? boundsOfGeoJson(join(ROOT, 'maps', region.regionFile)),
+    // Whole provinces are also streamed by the app when online, so the map
+    // works anywhere in Canada with signal, downloaded or not.
+    ...(region.online ? { online: true } : {}),
   });
 }
 
@@ -99,6 +103,11 @@ if (args.merge) {
 writeFileSync(join(outDir, 'catalog.json'), JSON.stringify(catalog, null, 2));
 console.log(`Wrote ${catalog.regions.length} regions to ${outDir}`);
 
+async function latestBuild() {
+  const builds = await (await fetch(BUILDS_INDEX)).json();
+  return builds.at(-1).key.replace('.pmtiles', '');
+}
+
 function readJsonOrNull(path) {
   try {
     return JSON.parse(readFileSync(path, 'utf8'));
@@ -107,10 +116,10 @@ function readJsonOrNull(path) {
   }
 }
 
-/** [west, south, east, north] of a GeoJSON Feature's polygon(s). */
+/** [west, south, east, north] of a GeoJSON Feature's Polygon or MultiPolygon. */
 function boundsOfGeoJson(path) {
   const feature = JSON.parse(readFileSync(path, 'utf8'));
-  const coords = feature.geometry.coordinates.flat(2);
+  const coords = feature.geometry.coordinates.flat(Infinity);
   const lons = coords.filter((_, i) => i % 2 === 0);
   const lats = coords.filter((_, i) => i % 2 === 1);
   return [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)];

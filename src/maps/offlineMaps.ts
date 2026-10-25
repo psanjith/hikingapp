@@ -7,10 +7,14 @@ import type { TileRouter } from './tileRouter';
 import type { Bounds, Catalog, RegionInfo, StoredRegion } from './types';
 
 /** Everything the Maps screen needs to draw one region row. */
-export type RegionRow =
+export type RegionRow = (
   | { state: 'available'; info: RegionInfo; partialBytes: number; error?: string }
   | { state: 'downloading'; info: RegionInfo; receivedBytes: number }
-  | { state: 'downloaded'; stored: StoredRegion; update?: RegionInfo; error?: string };
+  | { state: 'downloaded'; stored: StoredRegion; update?: RegionInfo; error?: string }
+) & {
+  /** The region's area includes the hiker's position (by its bounding box, so near a border both sides count). */
+  nearby: boolean;
+};
 
 type Listener = () => void;
 
@@ -67,30 +71,42 @@ export class OfflineMaps {
     return () => this.listeners.delete(listener);
   }
 
-  rows(): RegionRow[] {
+  /**
+   * One row per region. With the hiker's position, regions around them come
+   * first (smallest first, e.g. Lower Mainland before all of BC), so nobody
+   * has to scroll past the whole country to find their area.
+   */
+  rows(position?: [number, number]): RegionRow[] {
     const rows: RegionRow[] = [];
     const offered = this.catalog?.regions ?? [];
+    const near = (bounds: Bounds) => !!position && boundsContain(bounds, [...position, ...position]);
 
     for (const info of offered) {
       const download = this.downloads.get(info.id);
       const stored = this.stored.get(info.id);
       const error = this.errors.get(info.id);
+      const nearby = near(info.bounds);
       if (download) {
-        rows.push({ state: 'downloading', info, receivedBytes: download.receivedBytes });
+        rows.push({ state: 'downloading', info, receivedBytes: download.receivedBytes, nearby });
       } else if (stored) {
         const update = info.version > stored.version ? info : undefined;
-        rows.push({ state: 'downloaded', stored, update, error });
+        rows.push({ state: 'downloaded', stored, update, error, nearby });
       } else {
-        rows.push({ state: 'available', info, partialBytes: this.partial.get(info.id) ?? 0, error });
+        rows.push({ state: 'available', info, partialBytes: this.partial.get(info.id) ?? 0, error, nearby });
       }
     }
 
     // Regions on the phone that the catalog no longer lists (or the catalog
     // couldn't be loaded offline) must still be shown, so they can be deleted.
     for (const stored of this.stored.values()) {
-      if (!offered.some((info) => info.id === stored.id)) rows.push({ state: 'downloaded', stored });
+      if (!offered.some((info) => info.id === stored.id)) {
+        rows.push({ state: 'downloaded', stored, nearby: near(stored.bounds) });
+      }
     }
-    return rows;
+
+    const area = (row: RegionRow) => boundsArea(row.state === 'downloaded' ? row.stored.bounds : row.info.bounds);
+    const nearbyFirst = rows.filter((r) => r.nearby).sort((a, b) => area(a) - area(b));
+    return [...nearbyFirst, ...rows.filter((r) => !r.nearby)];
   }
 
   /**
@@ -182,8 +198,10 @@ export class OfflineMaps {
   }
 
   private configureOnlineSource(): void {
-    const online = this.catalog?.regions.find((r) => r.id === this.catalog?.onlineRegionId);
-    this.router.setOnlineSource(online?.url ?? null, online?.bounds ?? null);
+    const regions = this.catalog?.regions ?? [];
+    this.router.setOnlineSources(
+      regions.filter((r) => r.online || r.id === this.catalog?.onlineRegionId), // (older catalogs: one region)
+    );
   }
 
   private emit(): void {
