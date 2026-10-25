@@ -63,3 +63,8 @@ export function formatTimeLeft(ms: number): string {
   const hours = Math.floor(minutes / 60);
   return minutes % 60 === 0 ? `${hours} h` : `${hours} h ${minutes % 60} min`;
 }
+
+/** "↑ 240 m": total climb, or an empty string when unknown. */
+export function formatClimb(meters: number | null | undefined): string {
+  return meters === null || meters === undefined ? '' : `↑ ${Math.round(meters)} m`;
+}

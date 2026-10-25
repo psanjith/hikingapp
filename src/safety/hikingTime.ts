@@ -50,6 +50,50 @@ export function toblerTimeMs(path: readonly PathPoint[]): number {
   return ms;
 }
 
+/**
+ * A rise or drop only counts once it's at least this big (after smoothing).
+ * Without it, leftover wobble adds up: a few metres here and there over a
+ * long hike can add hundreds of metres of "climb" that never happened.
+ */
+const CLIMB_DEAD_BAND_M = 4;
+/** Lighter smoothing than for slopes, so summits aren't shaved off the climb. */
+const CLIMB_SMOOTHING_M = 25;
+
+/**
+ * Total climb and descent along a path, in metres, from smoothed elevation,
+ * or null if fewer than two points have an elevation (the phone didn't
+ * report altitude): better to show nothing than a made-up zero.
+ */
+export function elevationChange(path: readonly PathPoint[]): { climb: number; descent: number } | null {
+  if (path.filter((p) => p.ele !== null && Number.isFinite(p.ele)).length < 2) return null;
+  const heights = elevationProfile(path, CLIMB_SMOOTHING_M).map((p) => p.ele);
+
+  // Count from turning point to turning point (the top of each climb, the
+  // bottom of each descent), only accepting a change of direction once it's
+  // bigger than the dead band. Small wobbles never count, but no real climb
+  // is cut short either.
+  let climb = 0;
+  let descent = 0;
+  let turn = heights[0]; // Last confirmed top or bottom.
+  let extreme = heights[0]; // Highest (rising) or lowest (falling) point since then.
+  let direction: 1 | -1 | 0 = 0;
+  for (const h of heights) {
+    if (direction === 0) {
+      if (Math.abs(h - turn) >= CLIMB_DEAD_BAND_M) [direction, extreme] = [h > turn ? 1 : -1, h];
+    } else if ((h - extreme) * direction > 0) {
+      extreme = h; // Still going the same way.
+    } else if (Math.abs(extreme - h) >= CLIMB_DEAD_BAND_M) {
+      // Turned around for real: bank the climb or descent that just ended.
+      if (direction === 1) climb += extreme - turn;
+      else descent += turn - extreme;
+      [turn, extreme, direction] = [extreme, h, direction === 1 ? -1 : 1];
+    }
+  }
+  if (direction === 1) climb += extreme - turn;
+  if (direction === -1) descent += turn - extreme;
+  return { climb, descent };
+}
+
 /** Total length of a path in metres. */
 export function pathLength(path: readonly PathPoint[]): number {
   let total = 0;
@@ -65,7 +109,7 @@ interface ProfilePoint {
 }
 
 /** Distance along the path and smoothed elevation at each point. */
-function elevationProfile(path: readonly PathPoint[]): ProfilePoint[] {
+function elevationProfile(path: readonly PathPoint[], smoothingM = SMOOTHING_M): ProfilePoint[] {
   const distances: number[] = [];
   let total = 0;
   path.forEach((p, i) => {
@@ -82,8 +126,8 @@ function elevationProfile(path: readonly PathPoint[]): ProfilePoint[] {
   let end = 0;
   let sum = 0;
   for (let i = 0; i < path.length; i++) {
-    while (end < path.length && distances[end] - distances[i] <= SMOOTHING_M) sum += raw[end++];
-    while (distances[i] - distances[start] > SMOOTHING_M) sum -= raw[start++];
+    while (end < path.length && distances[end] - distances[i] <= smoothingM) sum += raw[end++];
+    while (distances[i] - distances[start] > smoothingM) sum -= raw[start++];
     smoothed.push(sum / (end - start));
   }
   return distances.map((distance, i) => ({ distance, ele: smoothed[i] }));

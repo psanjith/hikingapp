@@ -3,7 +3,7 @@ import { BackupError } from '../history/backup';
 import type { HikeHistory } from '../history/hikeHistory';
 import type { Hike } from '../recording/types';
 import { button, el } from './dom';
-import { formatDistance, formatDuration } from './format';
+import { formatClimb, formatDistance, formatDuration } from './format';
 import { showToast } from './toast';
 import { trackThumbnail } from './trackThumbnail';
 
@@ -105,7 +105,7 @@ export class HistoryPanel {
         el('div', { className: 'card-name', text: hike.name }),
         el('div', {
           className: 'card-meta',
-          text: `${formatHikeDate(hike.startedAt)} · ${formatDistance(hike.distanceMeters)} · ${formatDuration(hike.activeMs)}`,
+          text: hikeSummary(hike),
         }),
       ),
     );
@@ -149,4 +149,11 @@ export class HistoryPanel {
       });
     }
   }
+}
+
+/** "Sun, Oct 18, 2026 · 3.2 km · 1:05:12 · ↑ 240 m" (climb left out when unknown). */
+export function hikeSummary(hike: Hike): string {
+  return [formatHikeDate(hike.startedAt), formatDistance(hike.distanceMeters), formatDuration(hike.activeMs), formatClimb(hike.climbMeters)]
+    .filter(Boolean)
+    .join(' · ');
 }

@@ -4,13 +4,15 @@ import type { LonLat } from '../map/geo';
 export interface ShareImageOptions {
   /** White shows up on most photos; black for bright scenes like snow or sky. */
   color: 'white' | 'black';
-  /** Distance and time under the route. */
+  /** Distance, time and (when known) climb under the route. */
   showStats: boolean;
 }
 
 export interface ShareStats {
   distance: string;
   time: string;
+  /** Total climb, e.g. "240 m"; left off the image when unknown. */
+  climb?: string;
 }
 
 /** Instagram stories are 1080 px wide, so the sticker is drawn at that width. */
@@ -71,14 +73,20 @@ export async function renderShareImage(
   if (options.showStats) {
     const top = routeHeight;
     ctx.textAlign = 'center';
-    const column = (centreX: number, value: string, label: string) => {
-      ctx.font = `800 104px ${FONT}`;
+    const columns: [string, string][] = [
+      [stats.distance, 'Distance'],
+      [stats.time, 'Time'],
+      ...(stats.climb ? [[stats.climb, 'Climb'] as [string, string]] : []),
+    ];
+    // Two columns get big numbers; three need to be a bit smaller to fit.
+    const valueSize = columns.length === 3 ? 84 : 104;
+    columns.forEach(([value, label], i) => {
+      const centreX = (WIDTH * (2 * i + 1)) / (2 * columns.length);
+      ctx.font = `800 ${valueSize}px ${FONT}`;
       ctx.fillText(value, centreX, top + 120);
       ctx.font = `600 40px ${FONT}`;
       ctx.fillText(label, centreX, top + 180);
-    };
-    column(WIDTH * 0.28, stats.distance, 'Distance');
-    column(WIDTH * 0.72, stats.time, 'Time');
+    });
   }
 
   return new Promise((resolve, reject) =>

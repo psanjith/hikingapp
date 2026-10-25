@@ -3,8 +3,7 @@ import type { HikeHistory } from '../history/hikeHistory';
 import { boundsOfPoints } from '../map/geo';
 import type { TrackLayer } from '../map/trackLayer';
 import type { Hike } from '../recording/types';
-import { formatDistance, formatDuration } from './format';
-import { formatHikeDate } from './historyPanel';
+import { hikeSummary } from './historyPanel';
 import { showToast } from './toast';
 
 /**
@@ -54,7 +53,7 @@ export class HikeViewer {
   private render(): void {
     if (!this.hike) return;
     this.title.textContent = this.hike.name;
-    this.meta.textContent = `${formatHikeDate(this.hike.startedAt)} · ${formatDistance(this.hike.distanceMeters)} · ${formatDuration(this.hike.activeMs)}`;
+    this.meta.textContent = hikeSummary(this.hike);
   }
 
   private async export(): Promise<void> {

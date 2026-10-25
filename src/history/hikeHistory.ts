@@ -4,6 +4,7 @@ import type { HikeStore } from '../recording/hikeStore';
 import { groupSegments, trackPreview } from '../recording/trackPreview';
 import type { Hike, HikePoint } from '../recording/types';
 import type { RouteStore } from '../routes/routeStore';
+import { elevationChange } from '../safety/hikingTime';
 import type { Routes } from '../routes/routes';
 import { decodeBackup, encodeBackup } from './backup';
 
@@ -38,9 +39,13 @@ export class HikeHistory {
   /** Reloads the list from storage (after a hike finishes, a restore, etc.). */
   async refresh(): Promise<void> {
     const hikes = await this.store.listFinished();
-    // Hikes recorded before thumbnails existed get one now, once.
-    for (const hike of hikes.filter((h) => !h.preview)) {
-      hike.preview = trackPreview(groupSegments(await this.store.points(hike.id)));
+    // Hikes recorded before thumbnails or climb existed get them now, once.
+    for (const hike of hikes.filter((h) => !h.preview || h.climbMeters === undefined)) {
+      const points = await this.store.points(hike.id);
+      hike.preview ??= trackPreview(groupSegments(points));
+      const change = elevationChange(points.map((p) => ({ lon: p.lon, lat: p.lat, ele: p.altitude })));
+      hike.climbMeters = change?.climb ?? null;
+      hike.descentMeters = change?.descent ?? null;
       await this.store.update(hike);
     }
     this.hikes = hikes;

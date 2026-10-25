@@ -1,5 +1,6 @@
 import type { BatteryStatus } from '../device/battery';
 import type { Recorder } from '../recording/recorder';
+import { elevationChange } from '../safety/hikingTime';
 import type { TurnaroundMessage } from '../safety/turnaroundText';
 import { formatDuration } from './format';
 
@@ -23,6 +24,8 @@ export class HikeBar {
   private readonly bar: HTMLElement;
   private readonly distance: HTMLElement;
   private readonly time: HTMLElement;
+  private readonly climbStat: HTMLElement;
+  private readonly climb: HTMLElement;
   private readonly status: HTMLElement;
   private readonly daylight: HTMLElement;
   private readonly pauseButton: HTMLButtonElement;
@@ -41,6 +44,8 @@ export class HikeBar {
     this.bar = find('.hike-bar');
     this.distance = find('.hike-distance');
     this.time = find('.hike-time');
+    this.climbStat = find('.hike-climb-stat');
+    this.climb = find('.hike-climb');
     this.status = find('.hike-status');
     this.daylight = find('.hike-daylight');
     this.pauseButton = find('.hike-pause');
@@ -60,7 +65,10 @@ export class HikeBar {
       document.documentElement.style.setProperty('--bottom-ui', `${dock.offsetHeight + 12}px`);
     }).observe(dock);
 
-    recorder.subscribe(() => this.render());
+    recorder.subscribe(() => {
+      this.render();
+      this.renderClimb();
+    });
     this.render();
   }
 
@@ -99,6 +107,13 @@ export class HikeBar {
       : this.recorder.waitingForGps
         ? 'Recording. Waiting for a good GPS signal…'
         : 'Recording. Keep this app open.';
+  }
+
+  /** Climb so far, worked out when a point is saved (not every second). Hidden if the phone gives no altitude. */
+  private renderClimb(): void {
+    const change = this.recorder.state === 'idle' ? null : elevationChange(this.recorder.path);
+    this.climbStat.hidden = change === null;
+    if (change) this.climb.textContent = `↑${Math.round(change.climb)} m`;
   }
 
   private renderStats(): void {

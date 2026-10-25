@@ -1,7 +1,7 @@
 import type { LocationFix, LocationSource } from '../location/types';
 import { LIVE_TAIL_MAX_M, RECORD_MAX_ACCURACY_M } from '../config';
 import { distanceMeters, type LonLat } from '../map/geo';
-import type { PathPoint } from '../safety/hikingTime';
+import { elevationChange, type PathPoint } from '../safety/hikingTime';
 import type { HikeStore } from './hikeStore';
 import { filterFix, type FilterDecision, type FilterPoint } from './trackFilter';
 import { groupSegments, trackPreview } from './trackPreview';
@@ -208,6 +208,9 @@ export class Recorder {
     hike.status = 'finished';
     hike.endedAt = this.now();
     hike.preview = trackPreview(this.lines);
+    const change = elevationChange(this.path);
+    hike.climbMeters = change?.climb ?? null;
+    hike.descentMeters = change?.descent ?? null;
     this.unlisten();
 
     await this.writes; // Let any pending point saves land first.

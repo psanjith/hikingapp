@@ -80,13 +80,19 @@
             <span class="stat-value hike-time">0:00</span>
             <span class="stat-label">time</span>
           </div>
-          <div class="stat hike-battery-stat" hidden>
-            <span class="stat-value hike-battery"></span>
-            <span class="stat-label hike-battery-label">battery</span>
+          <div class="stat hike-climb-stat" hidden>
+            <span class="stat-value hike-climb"></span>
+            <span class="stat-label">climb</span>
           </div>
         </div>
         <p class="hike-daylight" hidden></p>
-        <p class="hike-status" role="status"></p>
+        <div class="hike-status-row">
+          <p class="hike-status" role="status"></p>
+          <!-- Only on phones that report battery (not iPhone). -->
+          <span class="hike-battery-stat" hidden>
+            <span class="hike-battery"></span> <span class="hike-battery-label">battery</span>
+          </span>
+        </div>
         <div class="hike-actions">
           <button class="btn btn-secondary hike-pause" type="button">Pause</button>
           <button class="btn btn-secondary hike-finish" type="button">Finish</button>
@@ -207,7 +213,7 @@
             <label><input type="radio" name="share-color" value="white" checked /> White</label>
             <label><input type="radio" name="share-color" value="black" /> Black</label>
           </div>
-          <label class="share-toggle"><input class="share-stats" type="checkbox" checked /> Distance and time</label>
+          <label class="share-toggle"><input class="share-stats" type="checkbox" checked /> Show stats</label>
         </div>
         <button class="btn btn-primary btn-wide share-copy" type="button">Copy image</button>
         <button class="btn btn-secondary btn-wide share-save" type="button">Save image</button>

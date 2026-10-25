@@ -63,7 +63,11 @@ export class SharePanel {
     this.dialog.dataset.color = this.options.color; // Lets the preview background contrast with the ink.
     this.image = await renderShareImage(
       this.track,
-      { distance: formatDistance(this.hike.distanceMeters), time: formatDuration(this.hike.activeMs) },
+      {
+        distance: formatDistance(this.hike.distanceMeters),
+        time: formatDuration(this.hike.activeMs),
+        climb: typeof this.hike.climbMeters === 'number' ? `${Math.round(this.hike.climbMeters)} m` : undefined,
+      },
       this.options,
     );
     if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);

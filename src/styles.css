@@ -565,7 +565,8 @@ body {
 
 .hike-stats {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 4px 16px;
 }
 
 .stat {
@@ -574,7 +575,7 @@ body {
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
@@ -586,7 +587,21 @@ body {
   color: #555;
 }
 
-.hike-battery-stat.is-low .stat-value {
+.hike-status-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hike-battery-stat {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #444;
+}
+
+.hike-battery-stat.is-low {
   color: var(--poor);
 }
 

@@ -28,6 +28,13 @@ export interface Hike {
    * Missing on hikes recorded before this was added.
    */
   preview?: LonLat[];
+  /**
+   * Total climb and descent (m), from smoothed GPS altitude. null when the
+   * phone gave no altitude; missing (undefined) on hikes from before this
+   * was added, until worked out from their points.
+   */
+  climbMeters?: number | null;
+  descentMeters?: number | null;
 }
 
 /** One saved GPS reading. */
