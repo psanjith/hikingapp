@@ -18,6 +18,7 @@ describe('parseGpx', () => {
       </trkseg></trk>`),
     );
     expect(result.name).toBe('Grouse Grind');
+    expect(result.elevations).toEqual([[290, 420, 1100]]); // Used to estimate hiking time.
     expect(result.lines).toEqual([
       [
         [-123.0987, 49.3712],
@@ -83,6 +84,7 @@ describe('parseGpx', () => {
       </trkseg></trk>`),
     );
     expect(result.lines[0]).toHaveLength(2);
+    expect(result.elevations[0]).toEqual([null, null]); // No <ele> in this file.
   });
 
   it('rejects files that are not GPX, with a message a user can understand', () => {

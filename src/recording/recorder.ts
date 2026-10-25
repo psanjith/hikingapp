@@ -1,6 +1,7 @@
 import type { LocationFix, LocationSource } from '../location/types';
 import { LIVE_TAIL_MAX_M, RECORD_MAX_ACCURACY_M } from '../config';
 import { distanceMeters, type LonLat } from '../map/geo';
+import type { PathPoint } from '../safety/hikingTime';
 import type { HikeStore } from './hikeStore';
 import { filterFix, type FilterDecision, type FilterPoint } from './trackFilter';
 import { groupSegments, trackPreview } from './trackPreview';
@@ -33,6 +34,8 @@ type Listener = () => void;
 export class Recorder {
   private hike: Hike | null = null;
   private lines: LonLat[][] = [];
+  /** GPS altitude of each point in `lines` (null where the phone didn't give one). */
+  private altitudes: (number | null)[][] = [];
   /** Last kept point of the current segment; null right after start/resume. */
   private lastKept: FilterPoint | null = null;
   private segment = 0;
@@ -80,6 +83,13 @@ export class Recorder {
     return [...this.lines.slice(0, -1), [...this.lines[this.lines.length - 1], here]];
   }
 
+  /** The hike so far as one path, in order, with altitudes (for daylight and time estimates). */
+  get path(): PathPoint[] {
+    return this.lines.flatMap((line, s) =>
+      line.map(([lon, lat], i) => ({ lon, lat, ele: this.altitudes[s]?.[i] ?? null })),
+    );
+  }
+
   /** Whether the current segment is still waiting for its first good GPS reading. */
   get waitingForGps(): boolean {
     return this.state === 'recording' && !this.lastKept;
@@ -118,6 +128,7 @@ export class Recorder {
 
     const points = await this.store.points(hike.id);
     this.lines = groupSegments(points);
+    this.altitudes = groupSegments(points, (p) => p.altitude);
     this.segment = Math.max(0, this.lines.length - 1);
     this.segmentHasPoints = points.length > 0;
     this.lastKept = null;
@@ -154,6 +165,7 @@ export class Recorder {
     await this.store.create(hike);
     this.hike = hike;
     this.lines = [];
+    this.altitudes = [];
     this.segment = 0;
     this.segmentHasPoints = false;
     this.lastKept = null;
@@ -205,6 +217,7 @@ export class Recorder {
 
     this.hike = null;
     this.lines = [];
+    this.altitudes = [];
     this.lastKept = null;
     this.emit();
     return keep ? hike : null;
@@ -235,6 +248,7 @@ export class Recorder {
     };
 
     (this.lines[this.segment] ??= []).push([fix.lon, fix.lat]);
+    (this.altitudes[this.segment] ??= []).push(fix.altitude);
     this.segmentHasPoints = true;
     this.lastKept = candidate;
     hike.pointCount += 1;

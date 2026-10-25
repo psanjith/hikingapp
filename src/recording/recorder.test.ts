@@ -149,4 +149,15 @@ describe('Recorder', () => {
     gps.emit(410, 310);
     expect(recorder.displayTrack(gps.lastFix)).toBe(recorder.track);
   });
+
+  it('keeps the altitude of each point, also after a restart', async () => {
+    await recorder.start('Test hike');
+    gps.emit(0, 0, 8, 100);
+    gps.emit(20, 15, 8, 104);
+    expect(recorder.path.map((p) => p.ele)).toEqual([100, 104]);
+    await flush();
+    const reopened = new Recorder(store, new FakeLocation(), () => clock);
+    await reopened.restore();
+    expect(reopened.path.map((p) => p.ele)).toEqual([100, 104]);
+  });
 });

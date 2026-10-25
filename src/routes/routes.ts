@@ -98,6 +98,7 @@ export function routeFromGpx(gpx: ParsedGpx, fileName: string, id: string, impor
     // Many exporters leave the name blank, so fall back to the file name.
     name: gpx.name ?? (fileName.replace(/\.gpx$/i, '').trim() || 'Imported route'),
     lines: gpx.lines,
+    elevations: gpx.elevations,
     waypoints: gpx.waypoints,
     bounds: boundsOfPoints(points)!, // parseGpx guarantees at least one point.
     lengthMeters: gpx.lines.reduce((sum, line) => sum + lineLengthMeters(line), 0),

@@ -1,5 +1,6 @@
 import type { BatteryStatus } from '../device/battery';
 import type { Recorder } from '../recording/recorder';
+import type { TurnaroundMessage } from '../safety/turnaroundText';
 import { formatDuration } from './format';
 
 /** Below this, the battery reading turns red. */
@@ -23,6 +24,7 @@ export class HikeBar {
   private readonly distance: HTMLElement;
   private readonly time: HTMLElement;
   private readonly status: HTMLElement;
+  private readonly daylight: HTMLElement;
   private readonly pauseButton: HTMLButtonElement;
   private readonly batteryStat: HTMLElement;
   private readonly battery: HTMLElement;
@@ -40,6 +42,7 @@ export class HikeBar {
     this.distance = find('.hike-distance');
     this.time = find('.hike-time');
     this.status = find('.hike-status');
+    this.daylight = find('.hike-daylight');
     this.pauseButton = find('.hike-pause');
     this.batteryStat = find('.hike-battery-stat');
     this.battery = find('.hike-battery');
@@ -66,6 +69,14 @@ export class HikeBar {
     this.battery.textContent = `${Math.round(level * 100)}%`;
     this.batteryLabel.textContent = charging ? 'charging' : 'battery';
     this.batteryStat.classList.toggle('is-low', level < LOW_BATTERY && !charging);
+  }
+
+  /** The daylight / turnaround line, or null to hide it. */
+  setDaylight(message: TurnaroundMessage | null): void {
+    this.daylight.hidden = message === null;
+    if (!message) return;
+    this.daylight.textContent = message.text;
+    this.daylight.dataset.tone = message.tone;
   }
 
   private render(): void {

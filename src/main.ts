@@ -37,11 +37,14 @@ import { distanceToRoute, OffRouteMonitor } from './routes/offRoute';
 import { createIndexedDbRouteStore } from './routes/routeStore';
 import { Routes } from './routes/routes';
 import { BatteryWarnings } from './safety/batteryWarnings';
+import { sunsetTime } from './safety/sun';
+import { describeDaylightAtStart } from './safety/turnaroundText';
 import { loadLastView, saveLastPosition } from './storage/lastPosition';
 import { watchConnectivity } from './ui/connectivity';
 import { formatDistance, formatDuration } from './ui/format';
 import { GpsDetailsPanel } from './ui/gpsDetailsPanel';
 import { GpsStatus } from './ui/gpsStatus';
+import { DaylightCoach } from './ui/daylightCoach';
 import { HikeBar } from './ui/hikeBar';
 import { HikeViewer } from './ui/hikeViewer';
 import { HistoryPanel } from './ui/historyPanel';
@@ -263,6 +266,9 @@ const hikeBar = new HikeBar(requireElement('hike-dock'), recorder, {
 
 const drawTrack = () => trackLayer.show(recorder.displayTrack(location.lastFix));
 recorder.subscribe(drawTrack);
+
+// Turnaround time: will you get back before dark?
+new DaylightCoach(recorder, routes, location, hikeBar, requireElement('daylight-banner'));
 // Every GPS reading, not just saved points, so the line keeps up with the blue dot.
 location.subscribe({ onFix: drawTrack });
 
@@ -293,6 +299,9 @@ async function startHike(): Promise<void> {
   // A hike in progress is exactly what we don't want the browser to clear.
   void requestPersistentStorage();
   const screenStaysOn = await recordingWakeLock.acquire();
+  const fix = location.lastFix;
+  const sunset = fix && sunsetTime(new Date(), fix.lat, fix.lon);
+  if (sunset) showToast(describeDaylightAtStart(Date.now(), sunset), { durationMs: 10_000 });
   showToast(
     screenStaysOn
       ? 'Recording. The screen will stay on. Keep this app open: phones stop GPS when the screen locks.'

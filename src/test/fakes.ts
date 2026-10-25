@@ -18,12 +18,12 @@ export class FakeLocation implements LocationSource {
     return this.listeners.size > 0;
   }
   /** A fix `north` metres north of the start, at `seconds`. */
-  emit(north: number, seconds: number, accuracy = 8) {
+  emit(north: number, seconds: number, accuracy = 8, altitude: number | null = null) {
     const fix: LocationFix = {
       lat: 49.37 + north / 111_195,
       lon: -123.08,
       accuracy,
-      altitude: null,
+      altitude,
       heading: null,
       speed: null,
       timestamp: seconds * 1000,

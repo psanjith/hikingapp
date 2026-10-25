@@ -16,9 +16,17 @@ export function trackPreview(segments: readonly LonLat[][], max = PREVIEW_POINTS
   return Array.from({ length: max }, (_, i) => all[Math.round(i * step)]);
 }
 
-/** Saved points (in recording order) back into one line per segment. */
-export function groupSegments(points: readonly HikePoint[]): LonLat[][] {
-  const lines: LonLat[][] = [];
-  for (const p of points) (lines[p.segment] ??= []).push([p.lon, p.lat]);
-  return lines.filter(Boolean); // In case a segment number was ever skipped.
+/**
+ * Saved points (in recording order) back into one array per segment: the
+ * positions by default, or any other value picked out of each point.
+ */
+export function groupSegments(points: readonly HikePoint[]): LonLat[][];
+export function groupSegments<T>(points: readonly HikePoint[], pick: (point: HikePoint) => T): T[][];
+export function groupSegments<T>(
+  points: readonly HikePoint[],
+  pick: (point: HikePoint) => T = (p) => [p.lon, p.lat] as T,
+): T[][] {
+  const groups: T[][] = [];
+  for (const p of points) (groups[p.segment] ??= []).push(pick(p));
+  return groups.filter(Boolean); // In case a segment number was ever skipped.
 }

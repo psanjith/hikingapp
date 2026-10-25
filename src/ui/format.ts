@@ -49,3 +49,17 @@ export function formatCoordinates(lat: number, lon: number): string {
     `${Math.abs(value).toFixed(5)}° ${value >= 0 ? positive : negative}`;
   return `${part(lat, 'N', 'S')}, ${part(lon, 'E', 'W')}`;
 }
+
+/** "5:42 p.m.": a time of day, in the phone's own time zone. */
+export function formatClock(ms: number): string {
+  return new Date(ms).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
+}
+
+/** "1 h 10 min", "25 min": how long until something. */
+export function formatTimeLeft(ms: number): string {
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 1) return 'under a minute';
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  return minutes % 60 === 0 ? `${hours} h` : `${hours} h ${minutes % 60} min`;
+}

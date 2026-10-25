@@ -14,6 +14,10 @@ const trail: ParsedGpx = {
       [-123.07, 49.381],
     ],
   ],
+  elevations: [
+    [null, null],
+    [null, null],
+  ],
   waypoints: [{ position: [-123.1, 49.39], name: 'Viewpoint' }],
 };
 

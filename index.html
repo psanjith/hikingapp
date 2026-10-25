@@ -32,6 +32,12 @@
         <span id="offline-chip" class="chip" data-tone="off" hidden>Offline · GPS still works</span>
       </div>
       <p id="gps-banner" class="banner" role="alert" hidden></p>
+      <div id="daylight-banner" class="banner daylight-banner" role="alert" hidden>
+        <p class="daylight-banner-text"></p>
+        <div class="banner-actions">
+          <button class="btn btn-secondary daylight-dismiss" type="button">OK</button>
+        </div>
+      </div>
       <div id="route-banner" class="banner route-banner" role="alert" hidden>
         <p class="route-banner-text"></p>
         <div class="banner-actions">
@@ -79,6 +85,7 @@
             <span class="stat-label hike-battery-label">battery</span>
           </div>
         </div>
+        <p class="hike-daylight" hidden></p>
         <p class="hike-status" role="status"></p>
         <div class="hike-actions">
           <button class="btn btn-secondary hike-pause" type="button">Pause</button>

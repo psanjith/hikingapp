@@ -590,6 +590,36 @@ body {
   color: var(--poor);
 }
 
+.hike-daylight {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  background: #e8f0e3;
+  color: var(--good);
+}
+
+.hike-daylight[data-tone='fair'] {
+  background: #fff3cd;
+  color: #7a4a00;
+}
+
+.hike-daylight[data-tone='poor'] {
+  background: #fde7e7;
+  color: var(--poor);
+}
+
+/* Amber, like the turnaround warnings in the hike bar. */
+.daylight-banner {
+  border-left-color: var(--fair);
+}
+
+.daylight-banner p {
+  margin: 0 0 10px;
+}
+
 .hike-status {
   margin: 8px 0 10px;
   font-size: 14px;
