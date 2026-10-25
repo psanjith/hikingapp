@@ -147,9 +147,9 @@ This file is the handoff from a planning conversation. Read it fully before writ
 
 - **Chosen "hero" feature (2026-10-24): pace-aware turnaround alert.** Positioning: *"the hiking app that gets beginners home before dark."* Design agreed in chat:
   - Sunset from lat/lon/date via the NOAA solar algorithm (pure, tested against published Vancouver times ±2 min); target = sunset − 30 min buffer.
-  - Return time (out-and-back v1) = active time spent getting here (pauses excluded, short stops included) × ~1.15 fatigue margin. "Turn around in" = (sunset − buffer − now) − return time. Needs ~10 min of walking before showing; until then show sunset only. Off (with a message) if starting after sunset.
+  - Return time (out-and-back v1) = active time spent getting here (pauses excluded, short stops included) × ~1.15 fatigue margin. "Turn around in" = (sunset − buffer − now) − return time. Shown **from the first minute**: return time is based on time actually spent, not on pace, so no warm-up is needed (at the start it's simply daylight left). Off (with a message) if starting after sunset.
   - UI: hike-bar stat green/amber (< 60 min)/red (< 15 min); banners at 30 min, 10 min, "Time to turn around". On the way back (distance to start decreasing, with hysteresis) switch to "Back at about 5:20 pm · sunset 6:12". Pre-hike: "Sunset 6:12 pm, plan to be back by 5:42 pm"; short-daylight warning.
-  - v2: loop routes (compare continue-to-end vs go-back using the loaded route), elevation-aware pace.
+  - v2: loop routes (compare continue-to-end vs go-back using the loaded route), elevation-aware pace. Forward estimates use pace, which **does** need a warm-up (~10 min / 1 km) before it's trustworthy.
   - Errs early on steep hikes (safe direction); labelled "estimated"; web version only while the app is open.
   - Build after initial real-user testing unless the owner says otherwise. Verify any claim like "leading cause of BC rescues" against AdventureSmart / BC SAR data before using it publicly.
 
