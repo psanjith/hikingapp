@@ -1,0 +1,49 @@
+name: Remove old map versions
+
+# The monthly build (on the 2nd) publishes new map files next to the old ones,
+# so a phone partway through downloading last month's file can finish. Three
+# days later, this keeps only the newest file of each region (the one
+# catalog.json points to).
+#
+# Why not keep two versions all month: all of Canada is ~6.3 GB, two copies
+# would be ~12.6 GB, and Cloudflare R2's free tier is 10 GB (billed as the
+# month's average). Overlapping for ~3 days averages ~6.9 GB: free.
+on:
+  schedule:
+    - cron: '0 10 5 * *' # 10:00 UTC on the 5th of every month
+  workflow_dispatch: # Runs immediately: removes old versions right away.
+
+permissions:
+  contents: read
+
+concurrency:
+  group: maps
+  cancel-in-progress: false
+
+env:
+  BUCKET: hikingapp-maps
+  AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: auto
+  AWS_ENDPOINT_URL: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+  AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+  AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Keep only the newest file of each region
+        # File names are dates (YYYYMMDD.pmtiles), so sorting by name sorts by age.
+        run: |
+          for id in $(aws s3 ls "s3://$BUCKET/regions/" | awk '{print $2}' | tr -d /); do
+            aws s3 ls "s3://$BUCKET/regions/$id/" | awk '{print $4}' | sort -r | tail -n +2 |
+              while read -r file; do
+                echo "Removing regions/$id/$file"
+                aws s3 rm "s3://$BUCKET/regions/$id/$file"
+              done
+          done
+
+      - name: Report storage used
+        run: aws s3 ls "s3://$BUCKET" --recursive --summarize | tail -2
